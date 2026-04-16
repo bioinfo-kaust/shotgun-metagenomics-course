@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shotgun Metagenomics Course | KAUST Bioinformatics Platform</title>
+  <meta name="description" content="Hands-on shotgun metagenomics course covering QC, assembly, binning, taxonomy, and nf-core/mag workflow."/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<nav>
+  <div class="nav-container">
+    <a href="index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="index.html" class="active">Overview</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="modules.html">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li>
+        <a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer"
+           aria-label="View on GitHub" style="display:flex;align-items:center;color:var(--color-text);transition:color 0.15s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <h1>Shotgun Metagenomics</h1>
+    <p class="tag-line">KAUST Bioinformatics Platform &mdash; 4-Day Workshop</p>
+    <p class="subtitle">A hands-on journey through the nf-core/mag workflow — run every tool yourself, then automate it all.</p>
+    <div class="cta-buttons">
+      <a href="modules.html" class="btn btn-primary">Browse Modules</a>
+      <a href="schedule.html" class="btn btn-secondary">See Schedule</a>
+      <a href="setup.html" class="btn btn-secondary">Setup Instructions</a>
+    </div>
+  </div>
+</section>
+
+<main id="main">
+
+  <!-- At a glance -->
+  <section>
+    <div class="container">
+      <h2>At a Glance</h2>
+      <p class="section-subtitle">Everything you need to know about what this course covers and who it's for.</p>
+
+      <div class="card-grid-4">
+        <div class="card" style="text-align:center;">
+          <span class="card-icon">📅</span>
+          <h3>4 Days</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light);">Lectures + guided hands-on sessions</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <span class="card-icon">🧩</span>
+          <h3>10 Modules / Labs</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light);">From raw reads to full automated workflow</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <span class="card-icon">🔧</span>
+          <h3>40+ Tools</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light);">fastp, MEGAHIT, MetaBAT2, GTDB-Tk &amp; more</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <span class="card-icon">🎓</span>
+          <h3>All Levels</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light);">Basic Linux skills &amp; NGS knowledge required</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What you will learn -->
+  <section class="alt">
+    <div class="container">
+      <h2>What You Will Learn</h2>
+      <p class="section-subtitle">Day 1 labs cover the cluster environment and pipeline overview. Modules 1–8 each cover one stage of the nf-core/mag pipeline — you run the tools manually first, then see how the workflow ties it all together.</p>
+
+      <div class="card-grid">
+        <a href="lab-linux-ibex.html" class="module-card">
+          <span class="module-number" style="background:#6c757d;">DAY 1 LAB</span>
+          <h3>Linux Command Line &amp; Ibex Cluster</h3>
+          <p>Connect to the Ibex HPC cluster, navigate the filesystem, use essential Linux commands for file inspection, activate conda environments, and submit and monitor SLURM jobs.</p>
+          <div class="module-tools">
+            <span class="tool-tag">SSH</span><span class="tool-tag">Linux</span><span class="tool-tag">conda</span><span class="tool-tag">SLURM</span><span class="tool-tag">screen</span>
+          </div>
+        </a>
+
+        <a href="lab-nextflow.html" class="module-card">
+          <span class="module-number" style="background:#6c757d;">DAY 1 LAB</span>
+          <h3>Nextflow &amp; nf-core/mag Overview</h3>
+          <p>Understand the nf-core/mag pipeline structure, run a stub dry-run to trace the workflow graph, and submit a full pipeline job on Ibex using a SLURM batch script.</p>
+          <div class="module-tools">
+            <span class="tool-tag">Nextflow</span><span class="tool-tag">nf-core/mag</span><span class="tool-tag">SLURM</span>
+          </div>
+        </a>
+
+        <a href="module-01-qc.html" class="module-card">
+          <span class="module-number">MODULE 1</span>
+          <h3>QC &amp; Preprocessing</h3>
+          <p>Short read adapter trimming, host/PhiX removal, and coverage normalisation. Long read QC, adapter removal, and quality filtering.</p>
+          <div class="module-tools">
+            <span class="tool-tag">FastQC</span><span class="tool-tag">fastp</span><span class="tool-tag">Bowtie2</span><span class="tool-tag">BBNorm</span><span class="tool-tag">NanoPlot</span><span class="tool-tag">Porechop_ABI</span><span class="tool-tag">Chopper</span>
+          </div>
+        </a>
+        <a href="module-02-assembly.html" class="module-card">
+          <span class="module-number">MODULE 2</span>
+          <h3>Assembly, Evaluation &amp; Annotation</h3>
+          <p>De novo assembly for short, long, and hybrid reads. Evaluate with QUAST and ALE. Predict genes and identify viruses/plasmids.</p>
+          <div class="module-tools">
+            <span class="tool-tag">MEGAHIT</span><span class="tool-tag">metaSPAdes</span><span class="tool-tag">Flye</span><span class="tool-tag">metaMDBG</span><span class="tool-tag">QUAST</span><span class="tool-tag">ALE</span><span class="tool-tag">Prodigal</span><span class="tool-tag">geNomad</span>
+          </div>
+        </a>
+        <a href="module-03-ancient-dna.html" class="module-card">
+          <span class="module-number">MODULE 3</span>
+          <h3>Ancient DNA Analysis</h3>
+          <p>Identify post-mortem DNA damage, call variants, and correct consensus sequences for ancient samples.</p>
+          <div class="module-tools">
+            <span class="tool-tag">PyDamage</span><span class="tool-tag">FreeBayes</span><span class="tool-tag">BCFtools</span>
+          </div>
+        </a>
+        <a href="module-04-binning.html" class="module-card">
+          <span class="module-number">MODULE 4</span>
+          <h3>Contig Binning</h3>
+          <p>Group contigs into draft genomes using six complementary binners and Tiara domain classification.</p>
+          <div class="module-tools">
+            <span class="tool-tag">MetaBAT2</span><span class="tool-tag">MaxBin2</span><span class="tool-tag">CONCOCT</span><span class="tool-tag">COMEBin</span><span class="tool-tag">SemiBin2</span><span class="tool-tag">Tiara</span>
+          </div>
+        </a>
+        <a href="module-05-bin-refinement.html" class="module-card">
+          <span class="module-number">MODULE 5</span>
+          <h3>Bin Refinement</h3>
+          <p>Combine bins from multiple binners and select the optimal non-redundant MAG set.</p>
+          <div class="module-tools">
+            <span class="tool-tag">DAS Tool</span>
+          </div>
+        </a>
+        <a href="module-06-bin-qc.html" class="module-card">
+          <span class="module-number">MODULE 6</span>
+          <h3>Bin Quality Evaluation</h3>
+          <p>Measure completeness and contamination, detect chimeras, and apply MIMAG standards.</p>
+          <div class="module-tools">
+            <span class="tool-tag">CheckM2</span><span class="tool-tag">CheckM</span><span class="tool-tag">BUSCO</span><span class="tool-tag">GUNC</span><span class="tool-tag">QUAST</span>
+          </div>
+        </a>
+        <a href="module-07-taxonomy.html" class="module-card">
+          <span class="module-number">MODULE 7</span>
+          <h3>Taxonomy &amp; Annotation</h3>
+          <p>Classify MAGs with GTDB-Tk, annotate contigs with CAT, and functionally annotate bins with Prokka and MetaEuk.</p>
+          <div class="module-tools">
+            <span class="tool-tag">GTDB-Tk</span><span class="tool-tag">CAT</span><span class="tool-tag">Prokka</span><span class="tool-tag">MetaEuk</span>
+          </div>
+        </a>
+        <a href="module-08-summary.html" class="module-card">
+          <span class="module-number">MODULE 8</span>
+          <h3>Run Summary</h3>
+          <p>Aggregate metrics with MultiQC, build MAG recovery tables, visualise with BigMAG, and run the full nf-core/mag pipeline.</p>
+          <div class="module-tools">
+            <span class="tool-tag">MultiQC</span><span class="tool-tag">BigMAG</span><span class="tool-tag">nf-core/mag</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pipeline overview -->
+  <section>
+    <div class="container">
+      <h2>Pipeline Overview</h2>
+      <p class="section-subtitle">The course follows the nf-core/mag workflow stage by stage — each module covers one step, then Module 8 runs them all automatically.</p>
+
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-icon">1</div>
+          <div class="step-content">
+            <strong>QC &amp; Preprocessing</strong>
+            <span>fastp, Bowtie2, BBNorm, Porechop_ABI</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">2</div>
+          <div class="step-content">
+            <strong>Assembly, Evaluation &amp; Annotation</strong>
+            <span>MEGAHIT, Flye, QUAST, ALE, Prodigal, geNomad</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">3</div>
+          <div class="step-content">
+            <strong>Ancient DNA Analysis</strong>
+            <span>PyDamage, FreeBayes, BCFtools</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">4</div>
+          <div class="step-content">
+            <strong>Contig Binning</strong>
+            <span>MetaBAT2, SemiBin2, COMEBin, Tiara &hellip;</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">5</div>
+          <div class="step-content">
+            <strong>Bin Refinement</strong>
+            <span>DAS Tool</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">6</div>
+          <div class="step-content">
+            <strong>Bin Quality Evaluation</strong>
+            <span>CheckM2, BUSCO, GUNC</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon">7</div>
+          <div class="step-content">
+            <strong>Taxonomy &amp; Annotation</strong>
+            <span>GTDB-Tk, CAT, Prokka, MetaEuk</span>
+          </div>
+        </div>
+        <div style="display:flex;"><div class="pipeline-connector"></div></div>
+        <div class="pipeline-step">
+          <div class="step-icon" style="background:var(--color-accent);">8</div>
+          <div class="step-content">
+            <strong>Run Summary</strong>
+            <span>MultiQC, BigMAG, nf-core/mag full pipeline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Prerequisites -->
+  <section class="alt">
+    <div class="container">
+      <h2>Prerequisites</h2>
+      <p class="section-subtitle">This is an intermediate-level course. Participants should have the following background.</p>
+
+      <div class="card-grid-3">
+        <div class="card">
+          <h3>Linux Command Line</h3>
+          <ul style="line-height:1.9; margin-top:0.75rem; margin-left:1.25rem;">
+            <li>Navigate the filesystem</li>
+            <li>Run and chain commands</li>
+            <li>Manage conda environments</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>NGS Concepts</h3>
+          <ul style="line-height:1.9; margin-top:0.75rem; margin-left:1.25rem;">
+            <li>Short-read sequencing basics</li>
+            <li>FASTQ format and quality scores</li>
+            <li>Paired-end reads</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Compute Resources</h3>
+          <ul style="line-height:1.9; margin-top:0.75rem; margin-left:1.25rem;">
+            <li>≥16 GB RAM (≥32 GB for assembly)</li>
+            <li>≥8 CPU cores recommended</li>
+            <li>~200 GB free disk space</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:2.5rem;">
+        <a href="setup.html" class="btn btn-primary">Set Up Your Environment</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<iframe src="footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+
+</body>
+</html>
