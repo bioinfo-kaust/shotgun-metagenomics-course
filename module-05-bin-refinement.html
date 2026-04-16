@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Module 5: Bin Refinement | Metagenomics Course</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+  <script>function copyCode(btn){const pre=btn.parentElement.querySelector('code');navigator.clipboard.writeText(pre.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="modules.html" class="active">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="module-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 5</div>
+    <span class="module-number">MODULE 5 &mdash; Day 3, Late Morning</span>
+    <h1>Bin Refinement</h1>
+    <p>Combine and de-replicate bins from multiple binners using DAS Tool to produce a single optimised, non-redundant set of high-quality MAGs.</p>
+  </div>
+</div>
+
+<main id="main">
+  <section style="padding-top:3rem;">
+    <div class="container">
+      <div class="content-grid">
+        <div class="content-body">
+
+          <h2 id="learning-objectives">Learning Objectives</h2>
+          <ul>
+            <li>Understand why combining multiple binners improves MAG quality and recovery</li>
+            <li>Prepare scaffold-to-bin mapping files for DAS Tool from each binner</li>
+            <li>Run DAS Tool to select the optimal non-redundant bin set</li>
+            <li>Interpret DAS Tool scoring metrics</li>
+          </ul>
+
+          <h2 id="background">Background</h2>
+          <p>Different binning algorithms capture complementary signals and each performs best on different community structures. Running multiple binners and combining their outputs with DAS Tool consistently recovers more and higher-quality MAGs than any single binner. DAS Tool uses a scoring function based on single-copy gene completeness and contamination estimates to select the best non-overlapping set of bins from across all binner outputs. It does not create new bins — it selects the best existing ones.</p>
+
+          <h2 id="tools">Tools</h2>
+          <table>
+            <thead><tr><th>Tool</th><th>Purpose</th><th>nf-core/mag parameter</th></tr></thead>
+            <tbody>
+              <tr><td><a href="https://github.com/cmks/DAS_Tool" target="_blank" rel="noopener">DAS Tool</a></td><td>Bin de-replication and refinement across multiple binners</td><td><code>--skip_das_tool false</code> (default on)</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="hands-on">Hands-on</h2>
+
+          <h3 id="step-1-scaffold-lists">Step 1 — Generate Scaffold-to-Bin Files</h3>
+          <p>DAS Tool requires a two-column TSV (scaffold &rarr; bin) for each binner:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/05-refinement/scaffold_lists
+
+# MetaBAT2
+Fasta_to_Scaffolds2Bin.sh \
+    -i results/04-binning/metabat2/ \
+    -e fa \
+    > results/05-refinement/scaffold_lists/metabat2.tsv
+
+# MaxBin2
+Fasta_to_Scaffolds2Bin.sh \
+    -i results/04-binning/maxbin2/ \
+    -e fasta \
+    > results/05-refinement/scaffold_lists/maxbin2.tsv
+
+# CONCOCT
+Fasta_to_Scaffolds2Bin.sh \
+    -i results/04-binning/concoct/bins/ \
+    -e fa \
+    > results/05-refinement/scaffold_lists/concoct.tsv
+
+# SemiBin2
+Fasta_to_Scaffolds2Bin.sh \
+    -i results/04-binning/semibin2/output_bins/ \
+    -e fa \
+    > results/05-refinement/scaffold_lists/semibin2.tsv</code></pre></div>
+
+          <h3 id="step-2-das-tool">Step 2 — Run DAS Tool</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/05-refinement/das_tool
+
+DAS_Tool \
+    -i results/05-refinement/scaffold_lists/metabat2.tsv,\
+results/05-refinement/scaffold_lists/maxbin2.tsv,\
+results/05-refinement/scaffold_lists/concoct.tsv,\
+results/05-refinement/scaffold_lists/semibin2.tsv \
+    -l metabat2,maxbin2,concoct,semibin2 \
+    -c results/02-assembly/megahit/sample.contigs.fa \
+    -o results/05-refinement/das_tool/sample \
+    --write_bins \
+    --write_unbinned \
+    --score_threshold 0.5 \
+    --threads 8</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Score threshold</strong>
+            The default <code>--score_threshold 0.5</code> retains bins where completeness minus 5× contamination exceeds 0.5. Lowering this recovers more bins at lower quality; raising it (e.g. 0.7) produces fewer but higher-confidence bins.
+          </div>
+
+          <h3 id="step-3-review-scores">Step 3 — Review DAS Tool Scores</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># View summary of selected bins
+cat results/05-refinement/das_tool/sample_DASTool_summary.tsv
+
+# Count selected bins
+tail -n +2 results/05-refinement/das_tool/sample_DASTool_summary.tsv | wc -l
+
+# List bins by score (higher = better)
+sort -t$'\t' -k11 -rn \
+    results/05-refinement/das_tool/sample_DASTool_summary.tsv | \
+    head -20</code></pre></div>
+
+          <h3 id="step-4-refined-bins">Step 4 — Inspect Refined Bins</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># List all selected bins
+ls results/05-refinement/das_tool/sample_DASTool_bins/
+
+# Check sizes
+for f in results/05-refinement/das_tool/sample_DASTool_bins/*.fa; do
+    echo -e "$(basename $f)\t$(grep -c '^>' $f) contigs\t$(awk '/^>/{next}{sum+=length($0)}END{print sum}' $f) bp"
+done</code></pre></div>
+
+          <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
+          <table>
+            <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>--skip_das_tool</code></td><td>false</td><td>Skip DAS Tool refinement</td></tr>
+              <tr><td><code>--das_tool_score_threshold</code></td><td>0.5</td><td>Minimum DAS Tool score to retain a bin</td></tr>
+              <tr><td><code>--das_tool_duplicate_penalty</code></td><td>0.6</td><td>Penalty for redundant bins</td></tr>
+              <tr><td><code>--das_tool_megabin_penalty</code></td><td>0.5</td><td>Penalty for very large bins</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="expected-output">Expected Output</h2>
+          <pre><code>results/05-refinement/
+├── scaffold_lists/
+│   ├── metabat2.tsv
+│   ├── maxbin2.tsv
+│   ├── concoct.tsv
+│   └── semibin2.tsv
+└── das_tool/
+    ├── sample_DASTool_bins/
+    │   ├── bin.001.fa
+    │   └── bin.002.fa
+    ├── sample_DASTool_summary.tsv
+    └── sample_DASTool_log.txt</code></pre>
+
+          <div style="display:flex; gap:1rem; margin-top:3rem;">
+            <a href="module-04-binning.html" class="btn btn-secondary">&larr; Module 4: Binning</a>
+            <a href="module-06-bin-qc.html" class="btn btn-primary">Module 6: Bin Quality &rarr;</a>
+          </div>
+
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h4>On This Page</h4>
+            <ul>
+              <li><a href="#learning-objectives">Learning Objectives</a></li>
+              <li><a href="#background">Background</a></li>
+              <li><a href="#tools">Tools</a></li>
+              <li><a href="#hands-on">Hands-on</a></li>
+              <li><a href="#step-1-scaffold-lists">Step 1 — Scaffold Lists</a></li>
+              <li><a href="#step-2-das-tool">Step 2 — DAS Tool</a></li>
+              <li><a href="#step-3-review-scores">Step 3 — Review Scores</a></li>
+              <li><a href="#step-4-refined-bins">Step 4 — Inspect Bins</a></li>
+              <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
+              <li><a href="#expected-output">Expected Output</a></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>All Modules</h4>
+            <ul>
+              <li><a href="lab-linux-ibex.html">Linux &amp; Ibex</a></li>
+              <li><a href="lab-nextflow.html">Nextflow &amp; nf-core/mag Overview</a></li>
+              <li><a href="module-01-qc.html">1. QC &amp; Preprocessing</a></li>
+              <li><a href="module-02-assembly.html">2. Assembly &amp; Annotation</a></li>
+              <li><a href="module-03-ancient-dna.html">3. Ancient DNA</a></li>
+              <li><a href="module-04-binning.html">4. Contig Binning</a></li>
+              <li><strong>5. Bin Refinement</strong></li>
+              <li><a href="module-06-bin-qc.html">6. Bin Quality</a></li>
+              <li><a href="module-07-taxonomy.html">7. Taxonomy &amp; Annotation</a></li>
+              <li><a href="module-08-summary.html">8. Run Summary</a></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<iframe src="footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>

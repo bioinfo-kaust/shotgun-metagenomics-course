@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Module 4: Contig Binning | Metagenomics Course</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+  <script>function copyCode(btn){const pre=btn.parentElement.querySelector('code');navigator.clipboard.writeText(pre.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="modules.html" class="active">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="module-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 4</div>
+    <span class="module-number">MODULE 4 &mdash; Day 3, Morning</span>
+    <h1>Contig Binning</h1>
+    <p>Group assembled contigs into draft genomes (bins / MAGs) using coverage depth and tetranucleotide composition with six complementary binners and Tiara domain classification.</p>
+  </div>
+</div>
+
+<main id="main">
+  <section style="padding-top:3rem;">
+    <div class="container">
+      <div class="content-grid">
+        <div class="content-body">
+
+          <h2 id="learning-objectives">Learning Objectives</h2>
+          <ul>
+            <li>Understand the two core binning signals: coverage depth and tetranucleotide composition</li>
+            <li>Prepare coverage depth files from BAM alignments for binners</li>
+            <li>Run MetaBAT2, MaxBin2, CONCOCT, COMEBin, MetaBinner, and SemiBin2</li>
+            <li>Classify contigs by domain (Bacteria, Archaea, Eukaryota, Virus) with Tiara before binning</li>
+            <li>Compare bin sets from different binners to inform DAS Tool refinement</li>
+          </ul>
+
+          <h2 id="background">Background</h2>
+          <p>Binning clusters assembled contigs into draft genomes by exploiting two signals: (1) coverage depth — contigs from the same organism have similar depth across samples; (2) tetranucleotide frequencies — species have characteristic k-mer composition (genomic signatures). Different binners weight these signals differently. Running multiple binners and combining them with DAS Tool (Module 5) consistently outperforms any single binner. Tiara classifies contigs by domain using deep learning on k-mer features, allowing eukaryotic, viral, and prokaryotic contigs to be handled separately before or during binning.</p>
+
+          <h2 id="tools">Tools</h2>
+          <table>
+            <thead><tr><th>Tool</th><th>Strategy</th><th>nf-core/mag parameter</th></tr></thead>
+            <tbody>
+              <tr><td><a href="https://github.com/edneymatias/MetaBAT2" target="_blank" rel="noopener">MetaBAT2</a></td><td>Coverage + composition; fast &amp; robust</td><td><code>--skip_metabat2 false</code></td></tr>
+              <tr><td><a href="https://sourceforge.net/projects/maxbin/" target="_blank" rel="noopener">MaxBin2</a></td><td>EM clustering on coverage + 107 universal marker genes</td><td><code>--skip_maxbin2 false</code></td></tr>
+              <tr><td><a href="https://github.com/BinCodec/CONCOCT" target="_blank" rel="noopener">CONCOCT</a></td><td>Gaussian mixture model on coverage + k-mers</td><td><code>--skip_concoct false</code></td></tr>
+              <tr><td><a href="https://github.com/ziyewang/COMEBin" target="_blank" rel="noopener">COMEBin</a></td><td>Contrastive learning on coverage + composition</td><td><code>--skip_comebin false</code></td></tr>
+              <tr><td><a href="https://github.com/ziyewang/MetaBinner" target="_blank" rel="noopener">MetaBinner</a></td><td>Ensemble of multiple coverage + composition models</td><td><code>--skip_metabinner false</code></td></tr>
+              <tr><td><a href="https://github.com/BigDataBiology/SemiBin" target="_blank" rel="noopener">SemiBin2</a></td><td>Self-supervised deep learning; sample or multi-sample mode</td><td><code>--skip_semibin false</code></td></tr>
+              <tr><td><a href="https://github.com/sszymanska/Tiara" target="_blank" rel="noopener">Tiara</a></td><td>Deep-learning domain classification of contigs</td><td><code>--skip_tiara false</code></td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="prepare-coverage">Step 1 — Prepare Coverage Depth File</h2>
+          <p>Most binners require a depth file derived from the BAM alignment generated in Module 2:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/coverage
+
+# Generate MetaBAT2-compatible depth file
+jgi_summarize_bam_contig_depths \
+    --outputDepth results/04-binning/coverage/sample.depth.txt \
+    results/02-assembly/coverage/sample.sorted.bam</code></pre></div>
+
+          <h2 id="tiara-classification">Step 2 — Domain Classification with Tiara</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/tiara
+
+tiara \
+    -i results/02-assembly/megahit/sample.contigs.fa \
+    -o results/04-binning/tiara/sample.tiara.txt \
+    --threads 8 \
+    --probabilities
+
+# View domain assignment summary
+cut -f2 results/04-binning/tiara/sample.tiara.txt | sort | uniq -c</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Tiara output</strong>
+            Tiara assigns each contig to: <code>bacteria</code>, <code>archaea</code>, <code>eukarya</code>, <code>organelle</code>, <code>virus</code>, or <code>unknown</code>. In nf-core/mag, Tiara is used to separate eukaryotic contigs for MetaEuk annotation and to refine binning of prokaryotic contigs.
+          </div>
+
+          <h2 id="metabat2">Step 3 — MetaBAT2</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/metabat2
+
+metabat2 \
+    -i results/02-assembly/megahit/sample.contigs.fa \
+    -a results/04-binning/coverage/sample.depth.txt \
+    -o results/04-binning/metabat2/bin \
+    --minContig 2000 \
+    --numThreads 8 \
+    --saveCls</code></pre></div>
+
+          <h2 id="maxbin2">Step 4 — MaxBin2</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/maxbin2
+
+run_MaxBin.pl \
+    -contig results/02-assembly/megahit/sample.contigs.fa \
+    -abund results/04-binning/coverage/sample.depth.txt \
+    -out results/04-binning/maxbin2/bin \
+    -min_contig_length 2000 \
+    -thread 8</code></pre></div>
+
+          <h2 id="concoct">Step 5 — CONCOCT</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/concoct/cut_contigs
+mkdir -p results/04-binning/concoct/output
+
+# Cut contigs into chunks for CONCOCT
+cut_up_fasta.py \
+    results/02-assembly/megahit/sample.contigs.fa \
+    -c 10000 -o 0 --merge_last \
+    -b results/04-binning/concoct/cut_contigs/sample.bed \
+    > results/04-binning/concoct/cut_contigs/sample.cut.fa
+
+# Generate coverage table
+concoct_coverage_table.py \
+    results/04-binning/concoct/cut_contigs/sample.bed \
+    results/02-assembly/coverage/sample.sorted.bam \
+    > results/04-binning/concoct/output/coverage_table.tsv
+
+# Run CONCOCT
+concoct \
+    --composition_file results/04-binning/concoct/cut_contigs/sample.cut.fa \
+    --coverage_file results/04-binning/concoct/output/coverage_table.tsv \
+    -b results/04-binning/concoct/output/ \
+    --threads 8
+
+# Merge cut contigs back
+merge_cutup_clustering.py \
+    results/04-binning/concoct/output/clustering_gt1000.csv \
+    > results/04-binning/concoct/output/clustering_merged.csv
+
+# Extract bins
+extract_fasta_bins.py \
+    results/02-assembly/megahit/sample.contigs.fa \
+    results/04-binning/concoct/output/clustering_merged.csv \
+    --output_path results/04-binning/concoct/bins/</code></pre></div>
+
+          <h2 id="comebin">Step 6 — COMEBin</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/comebin
+
+run_comebin.sh \
+    -a results/02-assembly/megahit/sample.contigs.fa \
+    -o results/04-binning/comebin \
+    -p results/02-assembly/coverage/ \
+    -t 8</code></pre></div>
+
+          <h2 id="semibin2">Step 7 — SemiBin2</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/04-binning/semibin2
+
+# Single-sample mode with self-supervised training
+SemiBin2 single_easy_bin \
+    -i results/02-assembly/megahit/sample.contigs.fa \
+    -b results/02-assembly/coverage/sample.sorted.bam \
+    -o results/04-binning/semibin2 \
+    --environment human_gut \
+    --threads 8</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>SemiBin2 environment presets</strong>
+            Use <code>--environment</code> to select a pretrained model: <code>human_gut</code>, <code>dog_gut</code>, <code>ocean</code>, <code>soil</code>, <code>built_environment</code>, <code>wastewater</code>, <code>cat_gut</code>, <code>global</code>. Use <code>global</code> when no specific preset fits.
+          </div>
+
+          <h2 id="bin-summary">Step 8 — Count Bins per Binner</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Count bins from each binner
+echo "MetaBAT2:  $(ls results/04-binning/metabat2/bin.*.fa 2>/dev/null | wc -l) bins"
+echo "MaxBin2:   $(ls results/04-binning/maxbin2/bin.*.fasta 2>/dev/null | wc -l) bins"
+echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa 2>/dev/null | wc -l) bins"</code></pre></div>
+
+          <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
+          <table>
+            <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>--skip_metabat2</code></td><td>false</td><td>Skip MetaBAT2 binning</td></tr>
+              <tr><td><code>--skip_maxbin2</code></td><td>false</td><td>Skip MaxBin2 binning</td></tr>
+              <tr><td><code>--skip_concoct</code></td><td>false</td><td>Skip CONCOCT binning</td></tr>
+              <tr><td><code>--skip_comebin</code></td><td>false</td><td>Skip COMEBin binning</td></tr>
+              <tr><td><code>--skip_metabinner</code></td><td>false</td><td>Skip MetaBinner binning</td></tr>
+              <tr><td><code>--skip_semibin</code></td><td>false</td><td>Skip SemiBin2 binning</td></tr>
+              <tr><td><code>--semibin_sensitivity</code></td><td>—</td><td>SemiBin2 environment preset</td></tr>
+              <tr><td><code>--skip_tiara</code></td><td>false</td><td>Skip Tiara domain classification</td></tr>
+              <tr><td><code>--min_length_unbinned_contigs</code></td><td>500000</td><td>Min total length for unbinned contig report</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="expected-output">Expected Output</h2>
+          <pre><code>results/04-binning/
+├── coverage/
+│   └── sample.depth.txt
+├── tiara/
+│   └── sample.tiara.txt
+├── metabat2/
+│   ├── bin.1.fa
+│   └── bin.2.fa
+├── maxbin2/
+│   └── bin.001.fasta
+├── concoct/
+│   └── bins/
+├── comebin/
+│   └── comebin_res/
+├── semibin2/
+│   └── output_bins/
+└── metabinner/
+    └── bins/</code></pre>
+
+          <div style="display:flex; gap:1rem; margin-top:3rem;">
+            <a href="module-03-ancient-dna.html" class="btn btn-secondary">&larr; Module 3: Ancient DNA</a>
+            <a href="module-05-bin-refinement.html" class="btn btn-primary">Module 5: Bin Refinement &rarr;</a>
+          </div>
+
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h4>On This Page</h4>
+            <ul>
+              <li><a href="#learning-objectives">Learning Objectives</a></li>
+              <li><a href="#background">Background</a></li>
+              <li><a href="#tools">Tools</a></li>
+              <li><a href="#prepare-coverage">Step 1 — Coverage Depth</a></li>
+              <li><a href="#tiara-classification">Step 2 — Tiara</a></li>
+              <li><a href="#metabat2">Step 3 — MetaBAT2</a></li>
+              <li><a href="#maxbin2">Step 4 — MaxBin2</a></li>
+              <li><a href="#concoct">Step 5 — CONCOCT</a></li>
+              <li><a href="#comebin">Step 6 — COMEBin</a></li>
+              <li><a href="#semibin2">Step 7 — SemiBin2</a></li>
+              <li><a href="#bin-summary">Step 8 — Count Bins</a></li>
+              <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
+              <li><a href="#expected-output">Expected Output</a></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>All Modules</h4>
+            <ul>
+              <li><a href="lab-linux-ibex.html">Linux &amp; Ibex</a></li>
+              <li><a href="lab-nextflow.html">Nextflow &amp; nf-core/mag Overview</a></li>
+              <li><a href="module-01-qc.html">1. QC &amp; Preprocessing</a></li>
+              <li><a href="module-02-assembly.html">2. Assembly &amp; Annotation</a></li>
+              <li><a href="module-03-ancient-dna.html">3. Ancient DNA</a></li>
+              <li><strong>4. Contig Binning</strong></li>
+              <li><a href="module-05-bin-refinement.html">5. Bin Refinement</a></li>
+              <li><a href="module-06-bin-qc.html">6. Bin Quality</a></li>
+              <li><a href="module-07-taxonomy.html">7. Taxonomy &amp; Annotation</a></li>
+              <li><a href="module-08-summary.html">8. Run Summary</a></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<iframe src="footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>

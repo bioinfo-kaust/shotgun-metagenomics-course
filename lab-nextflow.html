@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab: Nextflow &amp; nf-core/mag | Metagenomics Course</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+  <script>function copyCode(btn){const pre=btn.parentElement.querySelector('code');navigator.clipboard.writeText(pre.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="schedule.html" class="active">Schedule</a></li>
+      <li><a href="modules.html">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="module-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="schedule.html">Schedule</a> &rsaquo; Day 1</div>
+    <span class="module-number">DAY 1 &mdash; 10:15 &ndash; 10:45</span>
+    <h1>Nextflow &amp; nf-core/mag Overview</h1>
+    <p>Understand how Nextflow works, explore the nf-core/mag parameter space, build a samplesheet, and submit the pipeline job that will run in the background while you work through the manual modules.</p>
+  </div>
+</div>
+
+<main id="main">
+  <section style="padding-top:3rem;">
+    <div class="container">
+      <div class="content-grid">
+        <div class="content-body">
+
+          <h2 id="learning-objectives">Learning Objectives</h2>
+          <ul>
+            <li>Understand the relationship between Nextflow, nf-core, and nf-core/mag</li>
+            <li>Load Nextflow on Ibex and verify the installation</li>
+            <li>Navigate the nf-core/mag parameter space with <code>--help</code></li>
+            <li>Build a valid samplesheet CSV for your dataset</li>
+            <li>Validate the pipeline configuration with a dry run (<code>-stub</code>)</li>
+            <li>Submit the full pipeline job to run overnight</li>
+          </ul>
+
+          <h2 id="background">Background</h2>
+          <p><strong>Nextflow</strong> is a workflow manager that chains bioinformatics tools into reproducible, scalable pipelines. It handles parallelisation, error recovery, and execution on HPC clusters automatically. <strong>nf-core</strong> is a community effort that provides curated, best-practice Nextflow pipelines — including <strong>nf-core/mag</strong>, which automates every step you will run manually in Modules 1–8. Running the pipeline in parallel with the manual sessions lets you compare automated and manual outputs at the end of the course (Day 4).</p>
+
+          <h2 id="step-1-load">Step 1 — Load Nextflow on Ibex</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Load the Nextflow module
+module load nextflow/23.10.0
+
+# Verify
+nextflow -version</code></pre></div>
+
+          <p>Expected output:</p>
+          <pre><code>      N E X T F L O W
+      version 23.10.0 build 5889
+      ...</code></pre>
+
+          <div class="callout callout-note">
+            <strong>Singularity on Ibex</strong>
+            nf-core/mag uses Singularity containers to run every tool — no conda environments needed when running through the pipeline. Singularity is pre-installed on all Ibex compute nodes. We use <code>-profile singularity</code> in all pipeline commands.
+          </div>
+
+          <h2 id="step-2-explore">Step 2 — Explore nf-core/mag Parameters</h2>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Show the full parameter list for nf-core/mag v5.4.2
+nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
+
+          <p>Key parameter groups to note — these map directly to the modules you will run manually:</p>
+          <table>
+            <thead><tr><th>Group</th><th>Key parameters</th><th>Module</th></tr></thead>
+            <tbody>
+              <tr><td>Input / output</td><td><code>--input</code>, <code>--outdir</code></td><td>All</td></tr>
+              <tr><td>Short read QC</td><td><code>--host_fasta</code>, <code>--bbnorm</code></td><td>Module 1a</td></tr>
+              <tr><td>Long read QC</td><td><code>--skip_porechop</code>, <code>--longreads_min_length</code></td><td>Module 1b</td></tr>
+              <tr><td>Assembly</td><td><code>--assembler</code>, <code>--coassemble_group</code></td><td>Module 2</td></tr>
+              <tr><td>Ancient DNA</td><td><code>--ancient_dna</code>, <code>--pydamage_accuracy</code></td><td>Module 3</td></tr>
+              <tr><td>Binning</td><td><code>--skip_comebin</code>, <code>--skip_semibin</code></td><td>Module 4</td></tr>
+              <tr><td>Bin refinement</td><td><code>--das_tool_score_threshold</code></td><td>Module 5</td></tr>
+              <tr><td>Bin QC</td><td><code>--checkm2_db</code>, <code>--skip_gunc</code></td><td>Module 6</td></tr>
+              <tr><td>Taxonomy</td><td><code>--gtdbtk_db</code>, <code>--cat_db</code></td><td>Module 7</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="step-3-samplesheet">Step 3 — Build the Samplesheet</h2>
+          <p>nf-core/mag takes a CSV samplesheet as input. Each row is one sample:</p>
+
+          <table>
+            <thead><tr><th>Column</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>sample</code></td><td>Yes</td><td>Unique sample name (no spaces)</td></tr>
+              <tr><td><code>group</code></td><td>Yes</td><td>Samples sharing a group are co-assembled and use each other for binning coverage</td></tr>
+              <tr><td><code>short_reads_1</code></td><td>Yes</td><td>Path to forward FASTQ (can be gzipped)</td></tr>
+              <tr><td><code>short_reads_2</code></td><td>Yes</td><td>Path to reverse FASTQ</td></tr>
+              <tr><td><code>long_reads</code></td><td>No</td><td>Path to long-read FASTQ — leave empty for short-read-only samples</td></tr>
+            </tbody>
+          </table>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cd $WORKDIR
+
+# Create the samplesheet
+cat > samplesheet.csv << 'EOF'
+sample,group,short_reads_1,short_reads_2,long_reads
+sample1,group1,data/reads/sample1_R1.fastq.gz,data/reads/sample1_R2.fastq.gz,
+sample2,group1,data/reads/sample2_R1.fastq.gz,data/reads/sample2_R2.fastq.gz,data/reads/sample2_long.fastq.gz
+EOF
+
+# Verify it looks correct
+cat samplesheet.csv</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>Groups and co-assembly</strong>
+            Samples in the same <code>group</code> are co-assembled by default when <code>--coassemble_group true</code> is set. For independent assemblies, give each sample a unique group name. Coverage from all group members is used to improve binning regardless of assembly mode.
+          </div>
+
+          <h2 id="step-4-dryrun">Step 4 — Validate with a Dry Run</h2>
+          <p>The <code>-stub</code> flag runs all pipeline logic without executing any tools. It creates empty output files and checks that your samplesheet and parameters are valid — run this before committing to a real job.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>nextflow run nf-core/mag \
+    -r 5.4.2 \
+    -profile singularity \
+    --input samplesheet.csv \
+    --outdir results/nfcore_mag \
+    --host_fasta data/reference/host_genome.fa \
+    --bbnorm true \
+    --assembler megahit \
+    --checkm2_db /ibex/project/c2xxx/databases/checkm2_db/uniref100.KO.1.dmnd \
+    --gtdbtk_db /ibex/project/c2xxx/databases/gtdbtk_db \
+    --gunc_db /ibex/project/c2xxx/databases/gunc_db/gunc_db_progenomes2.1.dmnd \
+    --max_cpus 32 \
+    --max_memory 256.GB \
+    -stub</code></pre></div>
+
+          <p>A successful dry run prints a process execution tree and exits cleanly with no errors.</p>
+
+          <h2 id="step-5-submit">Step 5 — Submit the Pipeline Job</h2>
+          <p>Once the dry run passes, submit the real job as a SLURM batch script. This will run in the background while you work through the manual modules — results will be ready to compare on Day 4.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > run_nfcore_mag.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=nfcore_mag
+#SBATCH --partition=batch
+#SBATCH --time=48:00:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=4
+#SBATCH --output=nfcore_mag_%j.log
+#SBATCH --error=nfcore_mag_%j.err
+
+module load nextflow/23.10.0
+
+nextflow run nf-core/mag \
+    -r 5.4.2 \
+    -profile singularity \
+    --input samplesheet.csv \
+    --outdir results/nfcore_mag \
+    --host_fasta data/reference/host_genome.fa \
+    --bbnorm true \
+    --assembler megahit \
+    --skip_comebin false \
+    --skip_semibin false \
+    --run_virus_identification true \
+    --genomad_db /ibex/project/c2xxx/databases/genomad_db \
+    --skip_gunc false \
+    --gunc_db /ibex/project/c2xxx/databases/gunc_db/gunc_db_progenomes2.1.dmnd \
+    --checkm2_db /ibex/project/c2xxx/databases/checkm2_db/uniref100.KO.1.dmnd \
+    --gtdbtk_db /ibex/project/c2xxx/databases/gtdbtk_db \
+    --max_cpus 32 \
+    --max_memory 256.GB
+EOF
+
+# Submit
+sbatch run_nfcore_mag.sh
+
+# Check it is queued or running
+squeue -u $USER</code></pre></div>
+
+          <div class="callout callout-tip">
+            <strong>Nextflow resumes from where it stopped</strong>
+            If the job fails or times out, you can re-submit with <code>-resume</code> added to the <code>nextflow run</code> command. Nextflow caches completed process outputs and only re-runs failed or missing steps.
+          </div>
+
+          <h2 id="output-structure">Expected Output Structure</h2>
+          <pre><code>results/nfcore_mag/
+├── QC_shortreads/       ← FastQC, fastp, Bowtie2
+├── QC_longreads/        ← NanoPlot, Porechop_ABI
+├── Assembly/            ← MEGAHIT / SPAdes + QUAST + ALE
+├── Annotation/
+│   ├── Prodigal/
+│   └── geNomad/
+├── Binning/
+│   ├── MetaBAT2/ MaxBin2/ CONCOCT/ COMEBin/ SemiBin2/
+│   ├── Tiara/
+│   └── DASTool/
+├── BinQC/
+│   ├── CheckM2/ BUSCO/ GUNC/
+├── Taxonomy/
+│   ├── GTDB-Tk/ CAT/ Prokka/ MetaEuk/
+└── multiqc/
+    └── multiqc_report.html</code></pre>
+
+          <div style="display:flex; gap:1rem; margin-top:3rem;">
+            <a href="lab-linux-ibex.html" class="btn btn-secondary">&larr; Linux &amp; Ibex</a>
+            <a href="module-01-qc.html" class="btn btn-primary">Module 1: QC &amp; Preprocessing &rarr;</a>
+          </div>
+
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h4>On This Page</h4>
+            <ul>
+              <li><a href="#learning-objectives">Learning Objectives</a></li>
+              <li><a href="#background">Background</a></li>
+              <li><a href="#step-1-load">Step 1 — Load Nextflow</a></li>
+              <li><a href="#step-2-explore">Step 2 — Explore Parameters</a></li>
+              <li><a href="#step-3-samplesheet">Step 3 — Samplesheet</a></li>
+              <li><a href="#step-4-dryrun">Step 4 — Dry Run</a></li>
+              <li><a href="#step-5-submit">Step 5 — Submit Job</a></li>
+              <li><a href="#output-structure">Output Structure</a></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>Day 1 Sessions</h4>
+            <ul>
+              <li><a href="lab-linux-ibex.html">Linux &amp; Ibex</a></li>
+              <li><strong>Nextflow &amp; nf-core/mag</strong></li>
+              <li><a href="module-01-qc.html">Module 1: QC &amp; Preprocessing</a></li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<iframe src="footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>
