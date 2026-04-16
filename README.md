@@ -8,16 +8,6 @@ A hands-on course covering every stage of shotgun metagenomics analysis, from ra
 
 ---
 
-## Deployment
-
-The site is built as plain HTML/CSS and deployed automatically to GitHub Pages via GitHub Actions on every push to `main`.
-
-To preview locally:
-```bash
-python3 -m http.server 8000
-# Open http://localhost:8000
-```
-
 ## License
 
 Course materials are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). You are free to share and adapt with appropriate attribution.
