@@ -77,13 +77,18 @@
 
           <h3 id="step-1-megahit">Step 1 — Assemble with MEGAHIT</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/megahit
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load megahit
+
+mkdir -p results/02-assembly/megahit
 
 megahit \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     --out-dir results/02-assembly/megahit \
-    --out-prefix sample \
+    --out-prefix mock_control \
     --min-contig-len 500 \
     -t 16</code></pre></div>
 
@@ -93,8 +98,8 @@ megahit \
 
 spades.py \
     --meta \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     -o results/02-assembly/metaspades \
     --threads 16 \
     --memory 128</code></pre></div>
@@ -105,9 +110,9 @@ spades.py \
 
 spades.py \
     --meta \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
-    --nanopore results/01-qc/long_host_removed/sample.decontam.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    --nanopore results/01-qc/long_host_removed/sample_long.decontam.fastq.gz \
     -o results/02-assembly/hybrid \
     --threads 16 \
     --memory 128</code></pre></div>
@@ -145,7 +150,7 @@ metaMDBG asm \
           <pre><code>mkdir -p results/02-assembly/quast
 
 quast.py \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/metaspades/scaffolds.fasta \
     --output-dir results/02-assembly/quast \
     --min-contig 500 \
@@ -158,13 +163,13 @@ quast.py \
           <pre><code>mkdir -p results/02-assembly/ale
 
 # Map reads to assembly
-bowtie2-build results/02-assembly/megahit/sample.contigs.fa \
+bowtie2-build results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/ale/megahit_idx
 
 bowtie2 \
     -x results/02-assembly/ale/megahit_idx \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     -p 8 | \
 samtools sort -o results/02-assembly/ale/megahit.sorted.bam
 samtools index results/02-assembly/ale/megahit.sorted.bam
@@ -172,7 +177,7 @@ samtools index results/02-assembly/ale/megahit.sorted.bam
 # Run ALE
 ALE \
     results/02-assembly/ale/megahit.sorted.bam \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/ale/megahit.ale</code></pre></div>
 
           <h2 id="coverage-mapping">Part D — Coverage Mapping</h2>
@@ -183,21 +188,21 @@ ALE \
 
 # Build index on chosen assembly
 bowtie2-build \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/coverage/assembly_idx
 
 # Align reads
 bowtie2 \
     -x results/02-assembly/coverage/assembly_idx \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     -p 8 | \
-samtools sort -o results/02-assembly/coverage/sample.sorted.bam
-samtools index results/02-assembly/coverage/sample.sorted.bam
+samtools sort -o results/02-assembly/coverage/mock_control.sorted.bam
+samtools index results/02-assembly/coverage/mock_control.sorted.bam
 
 # Compute per-contig coverage depth
-samtools coverage results/02-assembly/coverage/sample.sorted.bam \
-    > results/02-assembly/coverage/sample.coverage.tsv</code></pre></div>
+samtools coverage results/02-assembly/coverage/mock_control.sorted.bam \
+    > results/02-assembly/coverage/mock_control.coverage.tsv</code></pre></div>
 
           <h3 id="step-9-minimap2-coverage">Step 9 — Map Long Reads for Coverage (Minimap2)</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -216,7 +221,7 @@ samtools index results/02-assembly/coverage/sample_long.sorted.bam</code></pre><
           <pre><code>mkdir -p results/02-assembly/prodigal
 
 prodigal \
-    -i results/02-assembly/megahit/sample.contigs.fa \
+    -i results/02-assembly/megahit/mock_control.contigs.fa \
     -p meta \
     -a results/02-assembly/prodigal/predicted_proteins.faa \
     -d results/02-assembly/prodigal/predicted_genes.fna \
@@ -233,7 +238,7 @@ prodigal \
           <pre><code>mkdir -p results/02-assembly/genomad
 
 genomad end-to-end \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/genomad \
     /path/to/genomad_db \
     --threads 8 \
@@ -262,7 +267,7 @@ genomad end-to-end \
           <h2 id="expected-output">Expected Output</h2>
           <pre><code>results/02-assembly/
 ├── megahit/
-│   └── sample.contigs.fa
+│   └── mock_control.contigs.fa
 ├── metaspades/
 │   └── scaffolds.fasta
 ├── flye/
@@ -270,15 +275,15 @@ genomad end-to-end \
 ├── quast/
 │   └── report.html
 ├── coverage/
-│   ├── sample.sorted.bam
-│   └── sample.coverage.tsv
+│   ├── mock_control.sorted.bam
+│   └── mock_control.coverage.tsv
 ├── prodigal/
 │   ├── predicted_proteins.faa
 │   └── predicted.gff
 └── genomad/
-    └── sample_summary/
-        ├── sample_virus_summary.tsv
-        └── sample_plasmid_summary.tsv</code></pre>
+    └── mock_control_summary/
+        ├── mock_control_virus_summary.tsv
+        └── mock_control_plasmid_summary.tsv</code></pre>
 
           <div style="display:flex; gap:1rem; margin-top:3rem;">
             <a href="module-01-qc.html" class="btn btn-secondary">&larr; Module 1: QC</a>

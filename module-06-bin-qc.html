@@ -71,10 +71,15 @@
 
           <h3 id="step-1-checkm2">Step 1 — Completeness &amp; Contamination with CheckM2</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/06-bin-qc/checkm2
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load checkm2
+
+mkdir -p results/06-bin-qc/checkm2
 
 checkm2 predict \
-    --input results/05-refinement/das_tool/sample_DASTool_bins/ \
+    --input results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --output-directory results/06-bin-qc/checkm2 \
     --database_path /path/to/checkm2_db/uniref100.KO.1.dmnd \
     --extension fa \
@@ -93,7 +98,7 @@ column -t -s$'\t' results/06-bin-qc/checkm2/quality_report.tsv | head -20</code>
           <pre><code>mkdir -p results/06-bin-qc/checkm
 
 checkm lineage_wf \
-    results/05-refinement/das_tool/sample_DASTool_bins/ \
+    results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     results/06-bin-qc/checkm \
     --extension fa \
     --threads 8 \
@@ -104,7 +109,7 @@ checkm lineage_wf \
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/06-bin-qc/busco
 
-for bin in results/05-refinement/das_tool/sample_DASTool_bins/*.fa; do
+for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
     name=$(basename ${bin%.fa})
     busco \
         -i $bin \
@@ -120,7 +125,7 @@ done</code></pre></div>
           <pre><code>mkdir -p results/06-bin-qc/gunc
 
 gunc run \
-    --input_dir results/05-refinement/das_tool/sample_DASTool_bins/ \
+    --input_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --out_dir results/06-bin-qc/gunc \
     --db_file /path/to/gunc_db/gunc_db_progenomes2.1.dmnd \
     --threads 8 \
@@ -135,7 +140,7 @@ awk -F'\t' 'NR==1 || $8 < 0.45' \
           <pre><code>mkdir -p results/06-bin-qc/quast
 
 quast.py \
-    results/05-refinement/das_tool/sample_DASTool_bins/*.fa \
+    results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa \
     --output-dir results/06-bin-qc/quast \
     --min-contig 500 \
     --threads 8</code></pre></div>

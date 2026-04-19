@@ -67,7 +67,12 @@
 
           <h2 id="multiqc">Step 1 — Aggregate Reports with MultiQC</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/08-summary/multiqc
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load multiqc
+
+mkdir -p results/08-summary/multiqc
 
 multiqc \
     results/ \
@@ -127,8 +132,8 @@ open results/08-summary/bigmag/bigmag_report.html</code></pre></div>
           <pre><code># Example samplesheet (CSV format)
 cat samplesheet.csv</code></pre></div>
           <pre><code>sample,group,short_reads_1,short_reads_2,long_reads
-sample1,group1,data/reads/s1_R1.fastq.gz,data/reads/s1_R2.fastq.gz,
-sample2,group1,data/reads/s2_R1.fastq.gz,data/reads/s2_R2.fastq.gz,data/reads/s2_long.fastq.gz</code></pre>
+mock_control,group1,raw_reads/mock_control_1.fastq.gz,raw_reads/mock_control_2.fastq.gz,
+mock_ss90,group1,raw_reads/mock_ss90_1.fastq.gz,raw_reads/mock_ss90_2.fastq.gz,</code></pre>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>nextflow run nf-core/mag \
