@@ -69,10 +69,15 @@
 
           <h3 id="step-1-gtdbtk">Step 1 — Phylogenomic Classification with GTDB-Tk</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/07-taxonomy/gtdbtk
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load gtdbtk
+
+mkdir -p results/07-taxonomy/gtdbtk
 
 gtdbtk classify_wf \
-    --genome_dir results/05-refinement/das_tool/sample_DASTool_bins/ \
+    --genome_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --out_dir results/07-taxonomy/gtdbtk \
     --extension fa \
     --cpus 8 \
@@ -83,24 +88,31 @@ gtdbtk classify_wf \
             Key files: <code>gtdbtk.bac120.summary.tsv</code> (bacteria) and <code>gtdbtk.ar53.summary.tsv</code> (archaea). Each row provides the classification, placement in the reference tree, RED value, and warnings. The <code>classification</code> column uses GTDB nomenclature (prefixed <code>d__</code>, <code>p__</code>, <code>c__</code>, etc.).
           </div>
 
+          <div class="callout callout-tip">
+            <strong>Verify against ground truth</strong>
+            The <strong>mock_control</strong> sample contains reads from exactly 20 known bacterial species (ATCC MSA-1003 mock community). Cross-check the species recovered in your GTDB-Tk output against the
+            <a href="https://doi.org/10.3389/fmicb.2019.01277" target="_blank" rel="noopener">known composition from Pereira-Marques et al. (2019)</a>.
+            This is a rare opportunity in metagenomics to evaluate your full pipeline against a gold standard.
+          </div>
+
           <h3 id="step-2-cat">Step 2 — Contig &amp; Bin Taxonomy with CAT</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/07-taxonomy/cat
 
 # Run CAT in bin mode
 CAT bins \
-    -b results/05-refinement/das_tool/sample_DASTool_bins/ \
+    -b results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     -s .fa \
     -d /path/to/cat_db/db \
     -t /path/to/cat_db/taxonomy \
-    -o results/07-taxonomy/cat/sample \
+    -o results/07-taxonomy/cat/mock_control \
     --threads 8 \
     --index_chunks 1
 
 # Add taxonomic lineage names
 CAT add_names \
-    results/07-taxonomy/cat/sample.bin2classification.txt \
-    -o results/07-taxonomy/cat/sample.named.txt \
+    results/07-taxonomy/cat/mock_control.bin2classification.txt \
+    -o results/07-taxonomy/cat/mock_control.named.txt \
     -t /path/to/cat_db/taxonomy \
     --only_official</code></pre></div>
 
@@ -108,7 +120,7 @@ CAT add_names \
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/07-taxonomy/prokka
 
-for bin in results/05-refinement/das_tool/sample_DASTool_bins/*.fa; do
+for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
     name=$(basename ${bin%.fa})
     prokka \
         $bin \
@@ -136,7 +148,7 @@ done</code></pre></div>
           <pre><code>mkdir -p results/07-taxonomy/metaeuk
 
 metaeuk easy-predict \
-    results/05-refinement/das_tool/sample_DASTool_bins/bin.euk.fa \
+    results/05-refinement/das_tool/mock_control_DASTool_bins/bin.euk.fa \
     /path/to/metaeuk_db/metaeuk_db \
     results/07-taxonomy/metaeuk/bin_euk \
     results/07-taxonomy/metaeuk/tmp \
@@ -156,7 +168,7 @@ column -t -s$'\t' \
 
 # Compare with CAT classification
 column -t -s$'\t' \
-    results/07-taxonomy/cat/sample.named.txt | head -10</code></pre></div>
+    results/07-taxonomy/cat/mock_control.named.txt | head -10</code></pre></div>
 
           <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
           <table>
@@ -180,8 +192,8 @@ column -t -s$'\t' \
 │   ├── gtdbtk.bac120.summary.tsv
 │   └── gtdbtk.ar53.summary.tsv
 ├── cat/
-│   ├── sample.bin2classification.txt
-│   └── sample.named.txt
+│   ├── mock_control.bin2classification.txt
+│   └── mock_control.named.txt
 ├── prokka/
 │   └── bin.001/
 │       ├── bin.001.gff

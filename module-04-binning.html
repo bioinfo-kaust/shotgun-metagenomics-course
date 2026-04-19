@@ -71,25 +71,30 @@
           <h2 id="prepare-coverage">Step 1 — Prepare Coverage Depth File</h2>
           <p>Most binners require a depth file derived from the BAM alignment generated in Module 2:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/04-binning/coverage
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load metabat2
+
+mkdir -p results/04-binning/coverage
 
 # Generate MetaBAT2-compatible depth file
 jgi_summarize_bam_contig_depths \
-    --outputDepth results/04-binning/coverage/sample.depth.txt \
-    results/02-assembly/coverage/sample.sorted.bam</code></pre></div>
+    --outputDepth results/04-binning/coverage/mock_control.depth.txt \
+    results/02-assembly/coverage/mock_control.sorted.bam</code></pre></div>
 
           <h2 id="tiara-classification">Step 2 — Domain Classification with Tiara</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/04-binning/tiara
 
 tiara \
-    -i results/02-assembly/megahit/sample.contigs.fa \
-    -o results/04-binning/tiara/sample.tiara.txt \
+    -i results/02-assembly/megahit/mock_control.contigs.fa \
+    -o results/04-binning/tiara/mock_control.tiara.txt \
     --threads 8 \
     --probabilities
 
 # View domain assignment summary
-cut -f2 results/04-binning/tiara/sample.tiara.txt | sort | uniq -c</code></pre></div>
+cut -f2 results/04-binning/tiara/mock_control.tiara.txt | sort | uniq -c</code></pre></div>
 
           <div class="callout callout-note">
             <strong>Tiara output</strong>
@@ -101,8 +106,8 @@ cut -f2 results/04-binning/tiara/sample.tiara.txt | sort | uniq -c</code></pre><
           <pre><code>mkdir -p results/04-binning/metabat2
 
 metabat2 \
-    -i results/02-assembly/megahit/sample.contigs.fa \
-    -a results/04-binning/coverage/sample.depth.txt \
+    -i results/02-assembly/megahit/mock_control.contigs.fa \
+    -a results/04-binning/coverage/mock_control.depth.txt \
     -o results/04-binning/metabat2/bin \
     --minContig 2000 \
     --numThreads 8 \
@@ -113,8 +118,8 @@ metabat2 \
           <pre><code>mkdir -p results/04-binning/maxbin2
 
 run_MaxBin.pl \
-    -contig results/02-assembly/megahit/sample.contigs.fa \
-    -abund results/04-binning/coverage/sample.depth.txt \
+    -contig results/02-assembly/megahit/mock_control.contigs.fa \
+    -abund results/04-binning/coverage/mock_control.depth.txt \
     -out results/04-binning/maxbin2/bin \
     -min_contig_length 2000 \
     -thread 8</code></pre></div>
@@ -126,20 +131,20 @@ mkdir -p results/04-binning/concoct/output
 
 # Cut contigs into chunks for CONCOCT
 cut_up_fasta.py \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     -c 10000 -o 0 --merge_last \
-    -b results/04-binning/concoct/cut_contigs/sample.bed \
-    > results/04-binning/concoct/cut_contigs/sample.cut.fa
+    -b results/04-binning/concoct/cut_contigs/mock_control.bed \
+    > results/04-binning/concoct/cut_contigs/mock_control.cut.fa
 
 # Generate coverage table
 concoct_coverage_table.py \
-    results/04-binning/concoct/cut_contigs/sample.bed \
-    results/02-assembly/coverage/sample.sorted.bam \
+    results/04-binning/concoct/cut_contigs/mock_control.bed \
+    results/02-assembly/coverage/mock_control.sorted.bam \
     > results/04-binning/concoct/output/coverage_table.tsv
 
 # Run CONCOCT
 concoct \
-    --composition_file results/04-binning/concoct/cut_contigs/sample.cut.fa \
+    --composition_file results/04-binning/concoct/cut_contigs/mock_control.cut.fa \
     --coverage_file results/04-binning/concoct/output/coverage_table.tsv \
     -b results/04-binning/concoct/output/ \
     --threads 8
@@ -151,7 +156,7 @@ merge_cutup_clustering.py \
 
 # Extract bins
 extract_fasta_bins.py \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/04-binning/concoct/output/clustering_merged.csv \
     --output_path results/04-binning/concoct/bins/</code></pre></div>
 
@@ -160,7 +165,7 @@ extract_fasta_bins.py \
           <pre><code>mkdir -p results/04-binning/comebin
 
 run_comebin.sh \
-    -a results/02-assembly/megahit/sample.contigs.fa \
+    -a results/02-assembly/megahit/mock_control.contigs.fa \
     -o results/04-binning/comebin \
     -p results/02-assembly/coverage/ \
     -t 8</code></pre></div>
@@ -171,8 +176,8 @@ run_comebin.sh \
 
 # Single-sample mode with self-supervised training
 SemiBin2 single_easy_bin \
-    -i results/02-assembly/megahit/sample.contigs.fa \
-    -b results/02-assembly/coverage/sample.sorted.bam \
+    -i results/02-assembly/megahit/mock_control.contigs.fa \
+    -b results/02-assembly/coverage/mock_control.sorted.bam \
     -o results/04-binning/semibin2 \
     --environment human_gut \
     --threads 8</code></pre></div>
@@ -208,9 +213,9 @@ echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa 2>/dev/null |
           <h2 id="expected-output">Expected Output</h2>
           <pre><code>results/04-binning/
 ├── coverage/
-│   └── sample.depth.txt
+│   └── mock_control.depth.txt
 ├── tiara/
-│   └── sample.tiara.txt
+│   └── mock_control.tiara.txt
 ├── metabat2/
 │   ├── bin.1.fa
 │   └── bin.2.fa

@@ -49,6 +49,8 @@
             <li>Inspect FASTQ and TSV files using standard Linux tools</li>
             <li>Activate and manage conda environments for course tools</li>
             <li>Submit, monitor, and cancel SLURM jobs</li>
+            <li>Download public sequencing data from NCBI SRA using <code>prefetch</code> and <code>fasterq-dump</code></li>
+            <li>Download reference genomes using NCBI Datasets CLI</li>
             <li>Use <code>screen</code> to keep sessions alive during long runs</li>
           </ul>
 
@@ -275,7 +277,147 @@ sinfo</code></pre></div>
             The instructors have pre-staged all databases needed for this course under <code>/ibex/project/c2xxx/metagenomics_course/databases/</code>. You do not need to request Ibex reference data access separately — just use the course paths provided.
           </div>
 
-          <h2 id="step-7-screen">Step 7 — Keep Sessions Alive with Screen</h2>
+          <h2 id="step-7-ncbi">Step 7 — Downloading Public Data from NCBI</h2>
+          <p>Two complementary tools cover the most common data-download scenarios: <strong>SRA Toolkit</strong> for raw sequencing reads (FASTQ) and <strong>NCBI Datasets CLI</strong> for reference genomes and assemblies.</p>
+
+          <h3 id="sra-toolkit">Part A — SRA Toolkit (reads)</h3>
+          <p>The <a href="https://www.ncbi.nlm.nih.gov/sra" target="_blank" rel="noopener">NCBI Sequence Read Archive (SRA)</a> is the world's largest repository of high-throughput sequencing data. Each experiment is identified by a <strong>run accession</strong> starting with <code>SRR</code>. SRA Toolkit provides two key commands:</p>
+
+          <table>
+            <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><code>prefetch</code></td><td>Downloads the compressed SRA container file to local cache. Resumable if interrupted — always use this step first for large files.</td></tr>
+              <tr><td><code>fasterq-dump</code></td><td>Converts the SRA container to FASTQ. <code>--split-files</code> writes R1/R2 as separate files; <code>-p</code> shows a progress bar; <code>-e</code> sets thread count.</td></tr>
+              <tr><td><code>vdb-dump --info</code></td><td>Inspects an SRA file or accession before converting — shows read count, read length, library layout.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="callout callout-note">
+            <strong>Why prefetch first?</strong>
+            Running <code>fasterq-dump</code> directly on an accession streams data over the network and cannot resume. <code>prefetch</code> downloads a single compressed <code>.sra</code> file that can restart from where it stopped; <code>fasterq-dump</code> then converts locally, which is also faster.
+          </div>
+
+          <p>Inspect an accession before downloading:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>module load sratoolkit
+
+# Inspect read count, layout, and length before committing to a download
+vdb-dump --info SRR9291172</code></pre></div>
+
+          <div class="callout callout-danger">
+            <strong>Module not found error</strong>
+            If <code>module load TOOL_XYZ</code> fails, search in the available app stack using <code>module avail KEYWORD</code> e.g. <code>module avail sra</code> to find the correct name of the app.
+          </div>
+
+          <p>Download and convert the course dataset (PRJNA521492 — Pereira-Marques et al. 2019):</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cd /ibex/user/$USER/metagenomics_course
+mkdir -p raw_reads
+cd raw_reads
+
+# Print prefetch help
+prefetch --help
+
+# Step 1: Download the SRA container (resumable)
+prefetch --progress SRR9291172 SRR9291174
+
+# Print fasterq-dump help
+fasterq-dump --help
+
+# Step 2: Convert to FASTQ (split paired reads, show progress, 16 threads)
+fasterq-dump SRR9291172 \
+    --split-files \
+    --outfile mock_control \
+    -p -v -e 16
+
+fasterq-dump SRR9291174 \
+    --split-files \
+    --outfile mock_ss90 \
+    -p -v -e 16
+
+# Step 3: Compress (most tools accept .fastq.gz; ~4× size reduction)
+gzip mock_control_1.fastq mock_control_2.fastq &
+gzip mock_ss90_1.fastq mock_ss90_2.fastq &
+
+wait;
+
+# Step 4: Clean up SRA containers and temp files
+rm -rf SRR9291172/ SRR9291174/ fasterq.tmp.*
+
+# Verify
+ls -lh *.fastq.gz
+# or
+tree -h ./
+</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Expected files after download</strong>
+            <code>mock_control_1.fastq.gz</code>, <code>mock_control_2.fastq.gz</code> — 0 % host (mock community only)<br>
+            <code>mock_ss90_1.fastq.gz</code>, <code>mock_ss90_2.fastq.gz</code> — 90 % C57BL/6 mouse host DNA
+          </div>
+
+          <div class="callout callout-tip">
+            <strong>Course shortcut</strong>
+            The raw data for this course are already pre-staged at <code>/biocorelab/BIX/resources/training/XXX</code>. You only need the steps above if you want to practise the download workflow or need data not included in the course data.
+          </div>
+
+          <h3 id="ncbi-datasets">Part B — NCBI Datasets CLI (reference genomes)</h3>
+          <p><a href="https://www.ncbi.nlm.nih.gov/datasets" target="_blank" rel="noopener">NCBI Datasets</a> is the modern replacement for Entrez Direct for downloading genomes and assemblies. Accessions starting with <code>GCA_</code> (GenBank) or <code>GCF_</code> (RefSeq) identify genome assemblies.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>module load ncbi-datasets-cli
+
+# Inspect assembly metadata before downloading
+datasets summary genome accession GCA_000001635.9 | python3 -m json.tool | head -40</code></pre></div>
+
+          <p>Download the C57BL/6 mouse reference genome (GRCm39) used in Module 1 for host removal:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p /ibex/user/$USER/metagenomics_course/references
+cd /ibex/user/$USER/metagenomics_course/references
+
+# Download genome FASTA only
+datasets download genome accession GCA_000001635.9 \
+    --include genome \
+    --filename GRCm39.zip
+
+# Unzip and move the FASTA
+unzip GRCm39.zip
+# Inspect content
+tree -h ncbi_dataset
+# move reference fasta file
+mv ncbi_dataset/data/GCA_000001635.9/*.fna GRCm39_GCA_000001635.9.fa
+# Clean-up
+rm -rf ncbi_dataset GRCm39.zip</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Dehydrated downloads for large genomes</strong>
+            For very large genomes or many assemblies add <code>--dehydrated</code> to download only metadata first, then <code>datasets rehydrate --directory .</code> to fetch the sequences. This is useful on slow connections or when downloading hundreds of assemblies.
+          </div>
+
+          <div class="callout callout-tip">
+            <strong>Course shortcut</strong>
+            The GRCm39 reference genome is already pre-staged at <code>/biocorelab/BIX/resources/genomes/Ensembl-release-113/GRCm39/GRCm39.fa</code>. You only need the steps above if you want to practise the download workflow or need a genome not included in the course data.
+          </div>
+
+          <h3 id="entrez">Part C — Entrez Direct (metadata and accession lists)</h3>
+          <p>Entrez Direct (<code>esearch</code> / <code>efetch</code>) is useful for querying NCBI databases programmatically — especially for fetching run metadata or generating accession lists for a BioProject before downloading with SRA Toolkit.</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>module load entrez-direct
+
+# Fetch all SRA run accessions for a BioProject
+esearch -db sra -query PRJNA521492 | efetch -format runinfo > PRJNA521492_runinfo.csv
+
+# Preview the columns
+head -2 PRJNA521492_runinfo.csv | cut -d',' -f1-6</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>Known issue on Ibex — SSL error</strong>
+            On some Ibex nodes <code>esearch</code> fails with <code>OpenSSL error:0A00006E: bad extension</code>. This is a TLS compatibility issue between the cluster's OpenSSL build and NCBI's servers. If you hit this, use the <strong>SRA Run Selector</strong> web interface instead: go to <a href="https://www.ncbi.nlm.nih.gov/Traces/study/" target="_blank" rel="noopener">ncbi.nlm.nih.gov/Traces/study/</a>, search for your BioProject accession, select the runs you want, and click <strong>Accession List</strong> to download a plain-text <code>SRR_Acc_List.txt</code> file. You can then feed it directly to <code>prefetch --option-file SRR_Acc_List.txt</code>.
+          </div>
+
+          <p>For bulk downloads of the actual reads, extract the <code>Run</code> column and pass accessions to <code>prefetch</code>; for metadata and genome downloads, prefer <strong>NCBI Datasets</strong> as shown in Part B above.</p>
+
+          <h2 id="step-8-screen">Step 8 — Keep Sessions Alive with Screen</h2>
           <p>If your SSH connection drops, an interactive <code>srun</code> session is lost. Use <code>screen</code> to protect long sessions.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Start a named screen session on the login node
@@ -315,7 +457,8 @@ screen -r metagenomics</code></pre></div>
               <li><a href="#step-6-slurm">Step 6 — SLURM</a></li>
               <li><a href="#policy-limits">Policy limits</a></li>
               <li><a href="#step-6b-refdata">Reference Databases</a></li>
-              <li><a href="#step-7-screen">Step 7 — Screen</a></li>
+              <li><a href="#step-7-ncbi">Step 7 — Downloading from NCBI</a></li>
+              <li><a href="#step-8-screen">Step 8 — Screen</a></li>
             </ul>
           </div>
           <div class="sidebar-card" style="margin-top:1rem;">
