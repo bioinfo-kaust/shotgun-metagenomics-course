@@ -171,17 +171,15 @@ source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
           <p>Once conda is active, create the single <code>metagenomics</code> environment (run on a compute node — this takes a few minutes):</p>
           <div style="position:relative;">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <pre><code>srun --partition=batch --time=01:00:00 --mem=8G --cpus-per-task=4 --pty bash
+            <pre><code>srun --partition=batch --time=01:00:00 --cpus-per-task=4 --pty bash
 
+# install missing tools IF available in any of the conda repos
 mamba create -n metagenomics -c conda-forge -c bioconda -y \
-    fastqc fastp bowtie2 samtools bbmap \
-    nanoplot porechop_abi chopper filtlong \
-    megahit spades flye metamdbg quast prodigal genomad minimap2 ale \
-    pydamage freebayes bcftools \
-    metabat2 maxbin2 concoct semibin2 tiara das_tool \
-    checkm2 busco gunc \
-    gtdbtk cat prokka metaeuk \
-    multiqc bigmag sra-tools</code></pre>
+pydamage
+
+# activate the env
+conda activate metagenomics
+            </code></pre>
           </div>
 
           <div class="callout callout-tip" style="margin-top:1rem;">
