@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Module 7: Taxonomy &amp; Annotation | Metagenomics Course</title>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+  <script>function copyCode(btn){const pre=btn.parentElement.querySelector('code');navigator.clipboard.writeText(pre.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="../index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="../index.html">Overview</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="modules.html" class="active">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="module-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 7</div>
+    <span class="module-number">MODULE 7 &mdash; Day 4, Morning</span>
+    <h1>Taxonomy &amp; Annotation</h1>
+    <p>Classify MAGs phylogenomically with GTDB-Tk, annotate contigs with CAT, and functionally annotate bins with Prokka (prokaryotes) and MetaEuk (eukaryotes).</p>
+  </div>
+</div>
+
+<main id="main">
+  <section style="padding-top:3rem;">
+    <div class="container">
+      <div class="content-grid">
+        <div class="content-body">
+
+          <h2 id="learning-objectives">Learning Objectives</h2>
+          <ul>
+            <li>Classify MAGs using the Genome Taxonomy Database (GTDB) with GTDB-Tk</li>
+            <li>Understand differences between GTDB and NCBI taxonomy</li>
+            <li>Annotate contigs and bins at the sequence level with CAT</li>
+            <li>Functionally annotate prokaryotic bins with Prokka</li>
+            <li>Predict eukaryotic genes from bins with MetaEuk</li>
+          </ul>
+
+          <h2 id="background">Background</h2>
+          <p>Taxonomy in metagenomics can be assigned at multiple levels. GTDB-Tk places MAGs into the GTDB reference tree using average nucleotide identity and phylogenomics — this is the gold standard for prokaryotic MAG classification. CAT assigns taxonomy to individual contigs or bins by searching predicted proteins against a database and applying a last-common-ancestor algorithm. Prokka rapidly annotates prokaryotic bins with gene functions, rRNA, tRNA, and CRISPRs. MetaEuk handles eukaryotic gene prediction in bins, which is important for complex environments (e.g. soil, marine) where eukaryotic microorganisms are abundant.</p>
+
+          <h2 id="tools">Tools</h2>
+          <table>
+            <thead><tr><th>Tool</th><th>Purpose</th><th>nf-core/mag parameter</th></tr></thead>
+            <tbody>
+              <tr><td><a href="https://github.com/Ecogenomics/GTDBTk" target="_blank" rel="noopener">GTDB-Tk</a></td><td>Phylogenomic taxonomy assignment using GTDB</td><td><code>--skip_gtdbtk false</code></td></tr>
+              <tr><td><a href="https://github.com/dutilhlab/CAT" target="_blank" rel="noopener">CAT</a></td><td>Contig and bin taxonomy via LCA on protein hits</td><td><code>--skip_cat false</code></td></tr>
+              <tr><td><a href="https://github.com/tseemann/prokka" target="_blank" rel="noopener">Prokka</a></td><td>Rapid prokaryotic bin annotation</td><td><code>--skip_prokka false</code></td></tr>
+              <tr><td><a href="https://github.com/soedinglab/metaeuk" target="_blank" rel="noopener">MetaEuk</a></td><td>Eukaryotic gene prediction on bins</td><td><code>--skip_metaeuk false</code></td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="hands-on">Hands-on</h2>
+
+          <h3 id="step-1-gtdbtk">Step 1 — Phylogenomic Classification with GTDB-Tk</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Navigate to your course working directory
+cd /ibex/user/$USER/metagenomics_course
+
+module load gtdbtk
+
+mkdir -p results/07-taxonomy/gtdbtk
+
+gtdbtk classify_wf \
+    --genome_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
+    --out_dir results/07-taxonomy/gtdbtk \
+    --extension fa \
+    --cpus 8 \
+    --mash_db /path/to/gtdbtk_db</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>GTDB-Tk output</strong>
+            Key files: <code>gtdbtk.bac120.summary.tsv</code> (bacteria) and <code>gtdbtk.ar53.summary.tsv</code> (archaea). Each row provides the classification, placement in the reference tree, RED value, and warnings. The <code>classification</code> column uses GTDB nomenclature (prefixed <code>d__</code>, <code>p__</code>, <code>c__</code>, etc.).
+          </div>
+
+          <div class="callout callout-tip">
+            <strong>Verify against ground truth</strong>
+            The <strong>mock_control</strong> sample contains reads from exactly 20 known bacterial species (ATCC MSA-1003 mock community). Cross-check the species recovered in your GTDB-Tk output against the
+            <a href="https://doi.org/10.3389/fmicb.2019.01277" target="_blank" rel="noopener">known composition from Pereira-Marques et al. (2019)</a>.
+            This is a rare opportunity in metagenomics to evaluate your full pipeline against a gold standard.
+          </div>
+
+          <h3 id="step-2-cat">Step 2 — Contig &amp; Bin Taxonomy with CAT</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/07-taxonomy/cat
+
+# Run CAT in bin mode
+CAT bins \
+    -b results/05-refinement/das_tool/mock_control_DASTool_bins/ \
+    -s .fa \
+    -d /path/to/cat_db/db \
+    -t /path/to/cat_db/taxonomy \
+    -o results/07-taxonomy/cat/mock_control \
+    --threads 8 \
+    --index_chunks 1
+
+# Add taxonomic lineage names
+CAT add_names \
+    results/07-taxonomy/cat/mock_control.bin2classification.txt \
+    -o results/07-taxonomy/cat/mock_control.named.txt \
+    -t /path/to/cat_db/taxonomy \
+    --only_official</code></pre></div>
+
+          <h3 id="step-3-prokka">Step 3 — Prokaryotic Annotation with Prokka</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/07-taxonomy/prokka
+
+for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
+    name=$(basename ${bin%.fa})
+    prokka \
+        $bin \
+        --outdir results/07-taxonomy/prokka/$name \
+        --prefix $name \
+        --metagenome \
+        --kingdom Bacteria \
+        --cpus 8 \
+        --force
+done
+
+# Summary: count CDS per bin
+for f in results/07-taxonomy/prokka/*/; do
+    txt=$(ls $f/*.txt 2>/dev/null | head -1)
+    [ -f "$txt" ] && echo -e "$(basename $f)\t$(grep 'CDS:' $txt)"
+done</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Prokka output files</strong>
+            <code>.gff</code> — gene coordinates (GFF3); <code>.faa</code> — protein sequences; <code>.tsv</code> — annotation table; <code>.txt</code> — summary statistics (# CDS, rRNA, tRNA).
+          </div>
+
+          <h3 id="step-4-metaeuk">Step 4 — Eukaryotic Gene Prediction with MetaEuk</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>mkdir -p results/07-taxonomy/metaeuk
+
+metaeuk easy-predict \
+    results/05-refinement/das_tool/mock_control_DASTool_bins/bin.euk.fa \
+    /path/to/metaeuk_db/metaeuk_db \
+    results/07-taxonomy/metaeuk/bin_euk \
+    results/07-taxonomy/metaeuk/tmp \
+    --threads 8</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>When to use MetaEuk</strong>
+            MetaEuk is appropriate for bins that Tiara (Module 4) classified as <code>eukarya</code>. Running it on prokaryotic bins is wasteful. In nf-core/mag, MetaEuk is enabled with <code>--skip_metaeuk false</code> and requires a MetaEuk-compatible MMseqs2 database (<code>--metaeuk_mmseqs_db</code>).
+          </div>
+
+          <h3 id="step-5-gtdb-vs-ncbi">Step 5 — GTDB vs NCBI Taxonomy</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Show GTDB classifications for bacteria
+column -t -s$'\t' \
+    results/07-taxonomy/gtdbtk/gtdbtk.bac120.summary.tsv | \
+    awk 'NR==1 || NR<=11' | cut -f1,2
+
+# Compare with CAT classification
+column -t -s$'\t' \
+    results/07-taxonomy/cat/mock_control.named.txt | head -10</code></pre></div>
+
+          <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
+          <table>
+            <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>--skip_gtdbtk</code></td><td>false</td><td>Skip GTDB-Tk classification</td></tr>
+              <tr><td><code>--gtdbtk_db</code></td><td>—</td><td>Path to GTDB-Tk reference data</td></tr>
+              <tr><td><code>--gtdbtk_pplacer_cpus</code></td><td>1</td><td>CPUs for pplacer placement step</td></tr>
+              <tr><td><code>--skip_cat</code></td><td>false</td><td>Skip CAT annotation</td></tr>
+              <tr><td><code>--cat_db</code></td><td>—</td><td>Path to CAT database</td></tr>
+              <tr><td><code>--skip_prokka</code></td><td>false</td><td>Skip Prokka bin annotation</td></tr>
+              <tr><td><code>--prokka_fast_mode</code></td><td>false</td><td>Skip product database search (faster)</td></tr>
+              <tr><td><code>--skip_metaeuk</code></td><td>false</td><td>Skip MetaEuk eukaryotic prediction</td></tr>
+              <tr><td><code>--metaeuk_mmseqs_db</code></td><td>—</td><td>MMseqs2 database for MetaEuk</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="expected-output">Expected Output</h2>
+          <pre><code>results/07-taxonomy/
+├── gtdbtk/
+│   ├── gtdbtk.bac120.summary.tsv
+│   └── gtdbtk.ar53.summary.tsv
+├── cat/
+│   ├── mock_control.bin2classification.txt
+│   └── mock_control.named.txt
+├── prokka/
+│   └── bin.001/
+│       ├── bin.001.gff
+│       ├── bin.001.faa
+│       └── bin.001.txt
+└── metaeuk/
+    └── bin_euk.fas</code></pre>
+
+          <div style="display:flex; gap:1rem; margin-top:3rem;">
+            <a href="module-06-bin-qc.html" class="btn btn-secondary">&larr; Module 6: Bin Quality</a>
+            <a href="module-08-summary.html" class="btn btn-primary">Module 8: Run Summary &rarr;</a>
+          </div>
+
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h4>On This Page</h4>
+            <ul>
+              <li><a href="#learning-objectives">Learning Objectives</a></li>
+              <li><a href="#background">Background</a></li>
+              <li><a href="#tools">Tools</a></li>
+              <li><a href="#hands-on">Hands-on</a></li>
+              <li><a href="#step-1-gtdbtk">Step 1 — GTDB-Tk</a></li>
+              <li><a href="#step-2-cat">Step 2 — CAT</a></li>
+              <li><a href="#step-3-prokka">Step 3 — Prokka</a></li>
+              <li><a href="#step-4-metaeuk">Step 4 — MetaEuk</a></li>
+              <li><a href="#step-5-gtdb-vs-ncbi">Step 5 — GTDB vs NCBI</a></li>
+              <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
+              <li><a href="#expected-output">Expected Output</a></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>All Modules</h4>
+            <ul>
+              <li><a href="lab-linux-ibex.html">Linux &amp; Ibex</a></li>
+              <li><a href="lab-nextflow.html">Nextflow &amp; nf-core/mag Overview</a></li>
+              <li><a href="module-01-qc.html">1. QC &amp; Preprocessing</a></li>
+              <li><a href="module-02-assembly.html">2. Assembly &amp; Annotation</a></li>
+              <li><a href="module-03-ancient-dna.html">3. Ancient DNA</a></li>
+              <li><a href="module-04-binning.html">4. Contig Binning</a></li>
+              <li><a href="module-05-bin-refinement.html">5. Bin Refinement</a></li>
+              <li><a href="module-06-bin-qc.html">6. Bin Quality</a></li>
+              <li><strong>7. Taxonomy &amp; Annotation</strong></li>
+              <li><a href="module-08-summary.html">8. Run Summary</a></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<iframe src="../footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>

@@ -19,11 +19,11 @@
     <a href="index.html" class="logo">Metagenomics Course</a>
     <ul>
       <li><a href="index.html" class="active">Overview</a></li>
-      <li><a href="schedule.html">Schedule</a></li>
-      <li><a href="modules.html">Modules</a></li>
-      <li><a href="setup.html">Setup</a></li>
-      <li><a href="resources.html">Resources</a></li>
-      <li><a href="about.html">About</a></li>
+      <li><a href="html/schedule.html">Schedule</a></li>
+      <li><a href="html/modules.html">Modules</a></li>
+      <li><a href="html/setup.html">Setup</a></li>
+      <li><a href="html/resources.html">Resources</a></li>
+      <li><a href="html/about.html">About</a></li>
       <li>
         <a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer"
            aria-label="View on GitHub" style="display:flex;align-items:center;color:var(--color-text);transition:color 0.15s;">
@@ -42,9 +42,9 @@
     <p class="tag-line">KAUST Bioinformatics Platform &mdash; 4-Day Workshop</p>
     <p class="subtitle">A hands-on journey through the nf-core/mag workflow — run every tool yourself, then automate it all.</p>
     <div class="cta-buttons">
-      <a href="modules.html" class="btn btn-primary">Browse Modules</a>
-      <a href="schedule.html" class="btn btn-secondary">See Schedule</a>
-      <a href="setup.html" class="btn btn-secondary">Setup Instructions</a>
+      <a href="html/modules.html" class="btn btn-primary">Browse Modules</a>
+      <a href="html/schedule.html" class="btn btn-secondary">See Schedule</a>
+      <a href="html/setup.html" class="btn btn-secondary">Setup Instructions</a>
     </div>
   </div>
 </section>
@@ -89,7 +89,7 @@
       <p class="section-subtitle">Day 1 labs cover the cluster environment and pipeline overview. Modules 1–8 each cover one stage of the nf-core/mag pipeline — you run the tools manually first, then see how the workflow ties it all together.</p>
 
       <div class="card-grid">
-        <a href="lab-linux-ibex.html" class="module-card">
+        <a href="html/lab-linux-ibex.html" class="module-card">
           <span class="module-number" style="background:#6c757d;">DAY 1 LAB</span>
           <h3>Linux Command Line &amp; Ibex Cluster</h3>
           <p>Connect to the Ibex HPC cluster, navigate the filesystem, use essential Linux commands for file inspection, activate conda environments, and submit and monitor SLURM jobs.</p>
@@ -98,7 +98,7 @@
           </div>
         </a>
 
-        <a href="lab-nextflow.html" class="module-card">
+        <a href="html/lab-nextflow.html" class="module-card">
           <span class="module-number" style="background:#6c757d;">DAY 1 LAB</span>
           <h3>Nextflow &amp; nf-core/mag Overview</h3>
           <p>Understand the nf-core/mag pipeline structure, run a stub dry-run to trace the workflow graph, and submit a full pipeline job on Ibex using a SLURM batch script.</p>
@@ -107,7 +107,7 @@
           </div>
         </a>
 
-        <a href="module-01-qc.html" class="module-card">
+        <a href="html/module-01-qc.html" class="module-card">
           <span class="module-number">MODULE 1</span>
           <h3>QC &amp; Preprocessing</h3>
           <p>Short read adapter trimming, host/PhiX removal, and coverage normalisation. Long read QC, adapter removal, and quality filtering.</p>
@@ -115,7 +115,7 @@
             <span class="tool-tag">FastQC</span><span class="tool-tag">fastp</span><span class="tool-tag">Bowtie2</span><span class="tool-tag">BBNorm</span><span class="tool-tag">NanoPlot</span><span class="tool-tag">Porechop_ABI</span><span class="tool-tag">Chopper</span>
           </div>
         </a>
-        <a href="module-02-assembly.html" class="module-card">
+        <a href="html/module-02-assembly.html" class="module-card">
           <span class="module-number">MODULE 2</span>
           <h3>Assembly, Evaluation &amp; Annotation</h3>
           <p>De novo assembly for short, long, and hybrid reads. Evaluate with QUAST and ALE. Predict genes and identify viruses/plasmids.</p>
@@ -123,7 +123,7 @@
             <span class="tool-tag">MEGAHIT</span><span class="tool-tag">metaSPAdes</span><span class="tool-tag">Flye</span><span class="tool-tag">metaMDBG</span><span class="tool-tag">QUAST</span><span class="tool-tag">ALE</span><span class="tool-tag">Prodigal</span><span class="tool-tag">geNomad</span>
           </div>
         </a>
-        <a href="module-03-ancient-dna.html" class="module-card">
+        <a href="html/module-03-ancient-dna.html" class="module-card">
           <span class="module-number">MODULE 3</span>
           <h3>Ancient DNA Analysis</h3>
           <p>Identify post-mortem DNA damage, call variants, and correct consensus sequences for ancient samples.</p>
@@ -131,7 +131,7 @@
             <span class="tool-tag">PyDamage</span><span class="tool-tag">FreeBayes</span><span class="tool-tag">BCFtools</span>
           </div>
         </a>
-        <a href="module-04-binning.html" class="module-card">
+        <a href="html/module-04-binning.html" class="module-card">
           <span class="module-number">MODULE 4</span>
           <h3>Contig Binning</h3>
           <p>Group contigs into draft genomes using six complementary binners and Tiara domain classification.</p>
@@ -139,7 +139,7 @@
             <span class="tool-tag">MetaBAT2</span><span class="tool-tag">MaxBin2</span><span class="tool-tag">CONCOCT</span><span class="tool-tag">COMEBin</span><span class="tool-tag">SemiBin2</span><span class="tool-tag">Tiara</span>
           </div>
         </a>
-        <a href="module-05-bin-refinement.html" class="module-card">
+        <a href="html/module-05-bin-refinement.html" class="module-card">
           <span class="module-number">MODULE 5</span>
           <h3>Bin Refinement</h3>
           <p>Combine bins from multiple binners and select the optimal non-redundant MAG set.</p>
@@ -147,7 +147,7 @@
             <span class="tool-tag">DAS Tool</span>
           </div>
         </a>
-        <a href="module-06-bin-qc.html" class="module-card">
+        <a href="html/module-06-bin-qc.html" class="module-card">
           <span class="module-number">MODULE 6</span>
           <h3>Bin Quality Evaluation</h3>
           <p>Measure completeness and contamination, detect chimeras, and apply MIMAG standards.</p>
@@ -155,7 +155,7 @@
             <span class="tool-tag">CheckM2</span><span class="tool-tag">CheckM</span><span class="tool-tag">BUSCO</span><span class="tool-tag">GUNC</span><span class="tool-tag">QUAST</span>
           </div>
         </a>
-        <a href="module-07-taxonomy.html" class="module-card">
+        <a href="html/module-07-taxonomy.html" class="module-card">
           <span class="module-number">MODULE 7</span>
           <h3>Taxonomy &amp; Annotation</h3>
           <p>Classify MAGs with GTDB-Tk, annotate contigs with CAT, and functionally annotate bins with Prokka and MetaEuk.</p>
@@ -163,7 +163,7 @@
             <span class="tool-tag">GTDB-Tk</span><span class="tool-tag">CAT</span><span class="tool-tag">Prokka</span><span class="tool-tag">MetaEuk</span>
           </div>
         </a>
-        <a href="module-08-summary.html" class="module-card">
+        <a href="html/module-08-summary.html" class="module-card">
           <span class="module-number">MODULE 8</span>
           <h3>Run Summary</h3>
           <p>Aggregate metrics with MultiQC, build MAG recovery tables, visualise with BigMAG, and run the full nf-core/mag pipeline.</p>
@@ -283,7 +283,7 @@
       </div>
 
       <div style="text-align:center; margin-top:2.5rem;">
-        <a href="setup.html" class="btn btn-primary">Set Up Your Environment</a>
+        <a href="html/setup.html" class="btn btn-primary">Set Up Your Environment</a>
       </div>
     </div>
   </section>

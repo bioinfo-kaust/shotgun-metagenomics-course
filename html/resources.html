@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resources | Shotgun Metagenomics Course</title>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="../index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="../index.html">Overview</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="modules.html">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html" class="active">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li>
+        <a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<section class="hero" style="padding:3rem 1.5rem 2.5rem;">
+  <div class="container">
+    <h1 style="font-size:clamp(2rem,5vw,3rem);">Resources</h1>
+    <p class="subtitle">Tools, key papers, databases, and links used throughout the course.</p>
+  </div>
+</section>
+
+<main id="main">
+
+  <!-- Tools by module -->
+  <section>
+    <div class="container">
+      <h2>Tools by Module</h2>
+      <p class="section-subtitle">Every tool used in this course, organised by the pipeline stage where it appears.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>Module 1 — QC &amp; Preprocessing</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/" target="_blank" rel="noopener">FastQC</a> — Raw read QC reports</li>
+            <li><a href="https://github.com/OpenGene/fastp" target="_blank" rel="noopener">fastp</a> — Adapter trimming &amp; filtering (default)</li>
+            <li><a href="https://github.com/MikkelSchubert/adapterremoval" target="_blank" rel="noopener">AdapterRemoval2</a> — Alternative trimmer for aDNA</li>
+            <li><a href="http://www.usadellab.org/cms/?page=trimmomatic" target="_blank" rel="noopener">Trimmomatic</a> — Alternative Illumina trimmer</li>
+            <li><a href="https://sourceforge.net/projects/bbmap/" target="_blank" rel="noopener">BBnorm</a> — Digital normalisation</li>
+            <li><a href="https://multiqc.info" target="_blank" rel="noopener">MultiQC</a> — Aggregate QC reports</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 2 — Host Read Removal</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://bowtie-bio.sourceforge.net/bowtie2/" target="_blank" rel="noopener">Bowtie2</a> — Short-read aligner (host/PhiX)</li>
+            <li><a href="http://www.htslib.org" target="_blank" rel="noopener">SAMtools</a> — BAM/SAM processing</li>
+            <li><a href="https://github.com/wdecoster/nanoplot" target="_blank" rel="noopener">NanoPlot</a> — Long-read QC plots</li>
+            <li><a href="https://github.com/wdecoster/nanolyse" target="_blank" rel="noopener">NanoLyse</a> — Lambda phage removal (long reads)</li>
+            <li><a href="https://github.com/porechop/porechop_abi" target="_blank" rel="noopener">Porechop_abi</a> — Nanopore adapter trimming</li>
+            <li><a href="https://github.com/wdecoster/chopper" target="_blank" rel="noopener">Chopper</a> — ONT quality filtering</li>
+            <li><a href="https://github.com/Daniel-Liu-c0deb0t/nanoq" target="_blank" rel="noopener">Nanoq</a> — PacBio quality filtering</li>
+            <li><a href="https://github.com/rrwick/Filtlong" target="_blank" rel="noopener">Filtlong</a> — Long-read length filtering</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 3 — Assembly</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://github.com/voutcn/megahit" target="_blank" rel="noopener">MEGAHIT</a> — Fast short-read assembler</li>
+            <li><a href="https://github.com/ablab/spades" target="_blank" rel="noopener">metaSPAdes</a> — High-quality short-read assembler</li>
+            <li><a href="https://github.com/ablab/spades" target="_blank" rel="noopener">SPAdes Hybrid</a> — Short + long read assembler</li>
+            <li><a href="https://github.com/fenderglass/Flye" target="_blank" rel="noopener">Flye</a> — Long-read assembler</li>
+            <li><a href="https://github.com/ttan6729/metaMDBG" target="_blank" rel="noopener">metaMDBG</a> — PacBio HiFi / ONT r10 assembler</li>
+            <li><a href="https://quast.sourceforge.net" target="_blank" rel="noopener">QUAST</a> — Assembly quality assessment</li>
+            <li><a href="https://github.com/sc932/ALE" target="_blank" rel="noopener">ALE</a> — Assembly likelihood evaluation</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 4 — Gene Prediction &amp; Annotation</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://github.com/hyattpd/Prodigal" target="_blank" rel="noopener">Prodigal</a> — Prokaryotic gene prediction</li>
+            <li><a href="https://github.com/tseemann/prokka" target="_blank" rel="noopener">Prokka</a> — Rapid genome annotation</li>
+            <li><a href="https://github.com/soedinglab/metaeuk" target="_blank" rel="noopener">MetaEuk</a> — Eukaryotic gene prediction</li>
+            <li><a href="https://github.com/apcamargo/genomad" target="_blank" rel="noopener">geNomad</a> — Virus &amp; plasmid identification</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 5 — Binning</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://bitbucket.org/berkeleylab/metabat" target="_blank" rel="noopener">MetaBAT2</a> — Coverage + composition (default)</li>
+            <li><a href="https://sourceforge.net/projects/maxbin2/" target="_blank" rel="noopener">MaxBin2</a> — EM algorithm binner</li>
+            <li><a href="https://github.com/BinPro/CONCOCT" target="_blank" rel="noopener">CONCOCT</a> — Coverage + k-mer PCA</li>
+            <li><a href="https://github.com/ziyewang/COMEBin" target="_blank" rel="noopener">COMEBin</a> — Contrastive multi-view learning</li>
+            <li><a href="https://github.com/ziyewang/MetaBinner" target="_blank" rel="noopener">MetaBinner</a> — Ensemble binning</li>
+            <li><a href="https://github.com/BigDataBiology/SemiBin" target="_blank" rel="noopener">SemiBin2</a> — Self-supervised deep learning</li>
+            <li><a href="https://github.com/cmks/DAS_Tool" target="_blank" rel="noopener">DAS Tool</a> — Bin refinement &amp; dereplication</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 6 — Bin Quality Assessment</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://github.com/chklovski/CheckM2" target="_blank" rel="noopener">CheckM2</a> — ML-based completeness &amp; contamination</li>
+            <li><a href="https://github.com/Ecogenomics/CheckM" target="_blank" rel="noopener">CheckM</a> — Marker-gene MAG quality</li>
+            <li><a href="https://busco.ezlab.org" target="_blank" rel="noopener">BUSCO</a> — Gene set completeness</li>
+            <li><a href="https://github.com/grp-bork/gunc" target="_blank" rel="noopener">GUNC</a> — Chimerism &amp; contamination screening</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 7 — Taxonomy Assignment</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://ecogenomics.github.io/GTDBTk/" target="_blank" rel="noopener">GTDB-Tk</a> — Phylogenomic taxonomy (default)</li>
+            <li><a href="https://github.com/dutilh/CAT" target="_blank" rel="noopener">CAT / BAT</a> — Contig &amp; bin protein-level taxonomy</li>
+            <li><a href="https://github.com/ibe-uw/tiara" target="_blank" rel="noopener">Tiara</a> — Deep-learning domain classification</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Module 8 — nf-core/mag &amp; Special Modes</h3>
+          <ul style="margin-top:0.75rem; line-height:2; list-style:none;">
+            <li><a href="https://nextflow.io" target="_blank" rel="noopener">Nextflow</a> — Workflow engine</li>
+            <li><a href="https://nf-co.re/mag/5.4.2" target="_blank" rel="noopener">nf-core/mag v5.4.2</a> — Full automated pipeline</li>
+            <li><a href="https://github.com/miwipe/pyDamage" target="_blank" rel="noopener">PyDamage</a> — Ancient DNA damage authentication</li>
+            <li><a href="https://github.com/freebayes/freebayes" target="_blank" rel="noopener">FreeBayes</a> — aDNA damage correction (variant calling)</li>
+            <li><a href="https://github.com/Integrative-Transcriptomics/BIgMAG" target="_blank" rel="noopener">BIgMAG</a> — MAG summary dashboard</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key papers -->
+  <section class="alt">
+    <div class="container">
+      <h2>Key Papers</h2>
+      <p class="section-subtitle">Foundational and recommended reading for this course.</p>
+
+      <div class="card-grid-3">
+        <div class="card">
+          <h3>nf-core/mag</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Krakau <em>et al.</em> (2022). nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning.</p>
+          <a href="https://doi.org/10.12688/f1000research.74349.1" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>MetaBAT2</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Kang <em>et al.</em> (2019). MetaBAT 2: an adaptive binning algorithm for robust and efficient genome reconstruction. <em>PeerJ</em>.</p>
+          <a href="https://doi.org/10.7717/peerj.7359" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>GTDB-Tk v2</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Parks <em>et al.</em> (2022). GTDB-Tk v2: memory friendly classification with the Genome Taxonomy Database. <em>Bioinformatics</em>.</p>
+          <a href="https://doi.org/10.1093/bioinformatics/btac672" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>CheckM2</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Chklovski <em>et al.</em> (2023). CheckM2: a rapid, scalable and accurate tool for assessing microbial genome quality. <em>Nature Methods</em>.</p>
+          <a href="https://doi.org/10.1038/s41592-023-01940-w" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>MIMAG Standards</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Bowers <em>et al.</em> (2017). Minimum information about a single amplified genome (MISAG) and a metagenome-assembled genome (MIMAG). <em>Nature Biotechnology</em>.</p>
+          <a href="https://doi.org/10.1038/nbt.3893" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>nf-core Framework</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Ewels <em>et al.</em> (2020). The nf-core framework for community-curated bioinformatics pipelines. <em>Nature Biotechnology</em>.</p>
+          <a href="https://doi.org/10.1038/s41587-020-0439-x" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>DAS Tool</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Sieber <em>et al.</em> (2018). Recovery of genomes from metagenomes via a dereplication, aggregation and scoring strategy. <em>Nature Microbiology</em>.</p>
+          <a href="https://doi.org/10.1038/s41564-018-0171-1" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>SemiBin2</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Pan <em>et al.</em> (2023). A deep siamese neural network improves metagenome-assembled genomes in microbiome datasets across different environments. <em>Nature Communications</em>.</p>
+          <a href="https://doi.org/10.1038/s41467-023-36377-4" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>geNomad</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Camargo <em>et al.</em> (2023). Identification of mobile genetic elements with geNomad. <em>Nature Biotechnology</em>.</p>
+          <a href="https://doi.org/10.1038/s41587-023-01953-y" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>GUNC</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Orakov <em>et al.</em> (2021). GUNC: detection of chimerism and contamination in prokaryotic genomes. <em>Genome Biology</em>.</p>
+          <a href="https://doi.org/10.1186/s13059-021-02393-0" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+        <div class="card">
+          <h3>Tiara</h3>
+          <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:0.75rem;">Karlicki <em>et al.</em> (2022). Tiara: deep learning-based classification system for sequences in eukaryotic genomes. <em>Bioinformatics</em>.</p>
+          <a href="https://doi.org/10.1093/bioinformatics/btab672" target="_blank" rel="noopener" style="font-size:0.875rem; font-weight:600; color:var(--color-primary); text-decoration:none;">View paper →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Databases -->
+  <section>
+    <div class="container">
+      <h2>Reference Databases</h2>
+      <p class="section-subtitle">Databases needed for the course — download before the first day.</p>
+      <table>
+        <thead>
+          <tr><th>Database</th><th>Used by</th><th>Size</th><th>Link</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GTDB r220</td><td>GTDB-Tk</td><td>~80 GB</td><td><a href="https://data.gtdb.ecogenomic.org/releases/latest/" target="_blank" rel="noopener">Download</a></td></tr>
+          <tr><td>CheckM2 DB</td><td>CheckM2</td><td>~3 GB</td><td><code>checkm2 database --download</code></td></tr>
+          <tr><td>BUSCO lineages</td><td>BUSCO</td><td>Variable</td><td>Downloaded on demand by BUSCO</td></tr>
+          <tr><td>CAT DB</td><td>CAT / BAT</td><td>~50 GB</td><td><a href="https://github.com/dutilh/CAT" target="_blank" rel="noopener">Instructions</a></td></tr>
+          <tr><td>geNomad DB</td><td>geNomad</td><td>~3 GB</td><td><code>genomad download-database .</code></td></tr>
+          <tr><td>GUNC DB</td><td>GUNC</td><td>~13 GB</td><td><code>gunc download_db .</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<iframe src="../footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>
