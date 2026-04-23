@@ -88,7 +88,7 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/07-taxonomy/gtdbtk
 
-module load gtdbtk
+module load gtdb-tk
 
 gtdbtk classify_wf \
     --genome_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
@@ -221,7 +221,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/07-taxonomy/metaeuk
 
-module load metaeuk
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
 metaeuk easy-predict \
     results/05-refinement/das_tool/mock_control_DASTool_bins/bin.euk.fa \

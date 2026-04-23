@@ -314,7 +314,7 @@ EOF</code></pre></div>
 
           <div class="callout callout-note">
             <strong>Course dataset: long reads</strong>
-            The long-read section uses a Zymo ZymoBIOMICS mock community dataset sequenced on Oxford Nanopore GridION with R10 high-accuracy (R10HC) chemistry: an even-abundance community of 10 microbial species. Download it in <a href="setup.html#step-6">Setup Step 6</a> before running these scripts; it will be saved as <code>raw_reads/zymo_long.fastq.gz</code>.
+            The long-read section uses a Zymo ZymoBIOMICS mock community dataset sequenced on Oxford Nanopore GridION with R10 high-accuracy (R10HC) chemistry: an even-abundance community of 10 microbial species. Download it in <a href="setup.html#step-6">Setup Step 6</a> before running these scripts; it will be saved as <code>raw_reads/zymo-even_ont-r10_long.fastq.gz</code>.
           </div>
 
           <h3 id="step-6-nanoplot">Step 6: Long Read Quality Assessment with NanoPlot</h3>
@@ -340,7 +340,7 @@ mkdir -p results/01-qc/nanoplot
 
 module load nanoplot
 NanoPlot \
-    --fastq raw_reads/zymo_long.fastq.gz \
+    --fastq raw_reads/zymo-even_ont-r10_long.fastq.gz \
     --outdir results/01-qc/nanoplot \
     --prefix zymo_long \
     --threads 8 \
@@ -370,9 +370,12 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/porechop
 
-module load porechop_abi
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
+
 porechop_abi \
-    -i raw_reads/zymo_long.fastq.gz \
+    -i raw_reads/zymo-even_ont-r10_long.fastq.gz \
     -o results/01-qc/porechop/zymo_long.porechop.fastq.gz \
     --threads 8
 EOF</code></pre></div>
@@ -401,7 +404,10 @@ cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/filtered
 
 # Option A: Chopper; quality + minimum length filter
-module load chopper
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
+
 gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
     chopper --quality 8 --minlength 1000 --threads 8 | \
     gzip > results/01-qc/filtered/zymo_long.chopper.fastq.gz
@@ -415,7 +421,9 @@ gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
 #     gzip > results/01-qc/filtered/zymo_long.filtlong.fastq.gz
 
 # Option C: Nanoq; fast filtering with JSON statistics (uncomment to use)
-# module load nanoq
+# source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+#     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+# conda activate metagenomics
 # nanoq \
 #     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
 #     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
