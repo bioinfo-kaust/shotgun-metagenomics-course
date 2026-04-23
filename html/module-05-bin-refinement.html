@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 5</div>
-    <span class="module-number">MODULE 5 &mdash; Day 3, Late Morning</span>
+    <span class="module-number">MODULE 5, Day 3, Late Morning</span>
     <h1>Bin Refinement</h1>
     <p>Combine and de-replicate bins from multiple binners using DAS Tool to produce a single optimised, non-redundant set of high-quality MAGs.</p>
   </div>
@@ -51,7 +51,7 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p>Different binning algorithms capture complementary signals and each performs best on different community structures. Running multiple binners and combining their outputs with DAS Tool consistently recovers more and higher-quality MAGs than any single binner. DAS Tool uses a scoring function based on single-copy gene completeness and contamination estimates to select the best non-overlapping set of bins from across all binner outputs. It does not create new bins — it selects the best existing ones.</p>
+          <p>Different binning algorithms capture complementary signals and each performs best on different community structures. Running multiple binners and combining their outputs with DAS Tool consistently recovers more and higher-quality MAGs than any single binner. DAS Tool uses a scoring function based on single-copy gene completeness and contamination estimates to select the best non-overlapping set of bins from across all binner outputs. It does not create new bins; it selects the best existing ones.</p>
 
           <h2 id="tools">Tools</h2>
           <table>
@@ -63,7 +63,7 @@
 
           <h2 id="hands-on">Hands-on</h2>
 
-          <h3 id="step-1-scaffold-lists">Step 1 — Generate Scaffold-to-Bin Files</h3>
+          <h3 id="step-1-scaffold-lists">Step 1: Generate Scaffold-to-Bin Files</h3>
           <p>DAS Tool requires a two-column TSV (scaffold &rarr; bin) for each binner:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Navigate to your course working directory
@@ -97,29 +97,47 @@ Fasta_to_Scaffolds2Bin.sh \
     -e fa \
     > results/05-refinement/scaffold_lists/semibin2.tsv</code></pre></div>
 
-          <h3 id="step-2-das-tool">Step 2 — Run DAS Tool</h3>
+          <h3 id="step-2-das-tool">Step 2: Run DAS Tool</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/05-refinement/das_tool
+          <pre><code>cat > scripts/refine_02_das_tool.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=refine_02_das_tool
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/refine_02_das_tool_%j.out
+#SBATCH --error=logs/refine_02_das_tool_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/05-refinement/das_tool
+
+module load das_tool
 
 DAS_Tool \
-    -i results/05-refinement/scaffold_lists/metabat2.tsv,\
-results/05-refinement/scaffold_lists/maxbin2.tsv,\
-results/05-refinement/scaffold_lists/concoct.tsv,\
-results/05-refinement/scaffold_lists/semibin2.tsv \
+    -i results/05-refinement/scaffold_lists/metabat2.tsv,results/05-refinement/scaffold_lists/maxbin2.tsv,results/05-refinement/scaffold_lists/concoct.tsv,results/05-refinement/scaffold_lists/semibin2.tsv \
     -l metabat2,maxbin2,concoct,semibin2 \
     -c results/02-assembly/megahit/mock_control.contigs.fa \
     -o results/05-refinement/das_tool/mock_control \
     --write_bins \
     --write_unbinned \
     --score_threshold 0.5 \
-    --threads 8</code></pre></div>
+    --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/refine_02_das_tool.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>Score threshold</strong>
             The default <code>--score_threshold 0.5</code> retains bins where completeness minus 5× contamination exceeds 0.5. Lowering this recovers more bins at lower quality; raising it (e.g. 0.7) produces fewer but higher-confidence bins.
           </div>
 
-          <h3 id="step-3-review-scores">Step 3 — Review DAS Tool Scores</h3>
+          <h3 id="step-3-review-scores">Step 3: Review DAS Tool Scores</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># View summary of selected bins
 cat results/05-refinement/das_tool/mock_control_DASTool_summary.tsv
@@ -132,7 +150,7 @@ sort -t$'\t' -k11 -rn \
     results/05-refinement/das_tool/mock_control_DASTool_summary.tsv | \
     head -20</code></pre></div>
 
-          <h3 id="step-4-refined-bins">Step 4 — Inspect Refined Bins</h3>
+          <h3 id="step-4-refined-bins">Step 4: Inspect Refined Bins</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># List all selected bins
 ls results/05-refinement/das_tool/mock_control_DASTool_bins/
@@ -182,10 +200,10 @@ done</code></pre></div>
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
               <li><a href="#hands-on">Hands-on</a></li>
-              <li><a href="#step-1-scaffold-lists">Step 1 — Scaffold Lists</a></li>
-              <li><a href="#step-2-das-tool">Step 2 — DAS Tool</a></li>
-              <li><a href="#step-3-review-scores">Step 3 — Review Scores</a></li>
-              <li><a href="#step-4-refined-bins">Step 4 — Inspect Bins</a></li>
+              <li><a href="#step-1-scaffold-lists">Step 1: Scaffold Lists</a></li>
+              <li><a href="#step-2-das-tool">Step 2: DAS Tool</a></li>
+              <li><a href="#step-3-review-scores">Step 3: Review Scores</a></li>
+              <li><a href="#step-4-refined-bins">Step 4: Inspect Bins</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>

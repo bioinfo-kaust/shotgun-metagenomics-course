@@ -1,6 +1,6 @@
 # Shotgun Metagenomics: From Raw Reads to MAGs
 
-**KAUST Bioinformatics Platform — 4-Day Workshop**
+**KAUST Bioinformatics Platform: 4-Day Workshop**
 
 A hands-on course covering every stage of shotgun metagenomics analysis, from raw read QC through to a complete automated run with nf-core/mag. Participants run each tool manually first, then see how the full pipeline ties it all together.
 

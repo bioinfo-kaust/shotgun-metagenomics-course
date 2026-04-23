@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 6</div>
-    <span class="module-number">MODULE 6 &mdash; Day 3, Afternoon</span>
+    <span class="module-number">MODULE 6, Day 3, Afternoon</span>
     <h1>Bin Quality Evaluation</h1>
     <p>Assess completeness, contamination, and chimeric content of MAGs using CheckM2, BUSCO, GUNC, and QUAST. Apply MIMAG quality thresholds to classify bins.</p>
   </div>
@@ -52,7 +52,7 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p>MAG quality is assessed primarily by completeness (how much of the expected genome is present) and contamination (how much foreign sequence is included). CheckM2 uses a machine-learning model and is more accurate than the original CheckM, particularly for novel lineages without well-represented marker genes. BUSCO takes a complementary approach, searching for a lineage-specific set of near-universal single-copy orthologs. GUNC detects chimeric bins — where contigs from multiple species have been co-binned — using a taxonomic concordance score. QUAST reports contig-level assembly statistics per bin.</p>
+          <p>MAG quality is assessed primarily by completeness (how much of the expected genome is present) and contamination (how much foreign sequence is included). CheckM2 uses a machine-learning model and is more accurate than the original CheckM, particularly for novel lineages without well-represented marker genes. BUSCO takes a complementary approach, searching for a lineage-specific set of near-universal single-copy orthologs. GUNC detects chimeric bins, where contigs from multiple species have been co-binned, using a taxonomic concordance score. QUAST reports contig-level assembly statistics per bin.</p>
           <p>The MIMAG standards define: <strong>high-quality</strong> (≥90% completeness, ≤5% contamination, presence of 5S/16S/23S rRNA + ≥18 tRNA genes); <strong>medium-quality</strong> (≥50% completeness, &lt;10% contamination); <strong>low-quality</strong> (below medium).</p>
 
           <h2 id="tools">Tools</h2>
@@ -69,33 +69,69 @@
 
           <h2 id="hands-on">Hands-on</h2>
 
-          <h3 id="step-1-checkm2">Step 1 — Completeness &amp; Contamination with CheckM2</h3>
+          <h3 id="step-1-checkm2">Step 1: Completeness &amp; Contamination with CheckM2</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Navigate to your course working directory
+          <pre><code>cat > scripts/binqc_01_checkm2.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=binqc_01_checkm2
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/binqc_01_checkm2_%j.out
+#SBATCH --error=logs/binqc_01_checkm2_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/06-bin-qc/checkm2
 
 module load checkm2
-
-mkdir -p results/06-bin-qc/checkm2
 
 checkm2 predict \
     --input results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --output-directory results/06-bin-qc/checkm2 \
-    --database_path /path/to/checkm2_db/uniref100.KO.1.dmnd \
+    --database_path /ibex/project/c2xxx/databases/checkm2_db/uniref100.KO.1.dmnd \
     --extension fa \
     --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/binqc_01_checkm2.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-# View completeness and contamination
-column -t -s$'\t' results/06-bin-qc/checkm2/quality_report.tsv | head -20</code></pre></div>
+          <p>Once complete, view the completeness and contamination results interactively:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>column -t -s$'\t' results/06-bin-qc/checkm2/quality_report.tsv | head -20</code></pre></div>
 
           <div class="callout callout-note">
             <strong>CheckM2 vs CheckM</strong>
             CheckM2 uses a machine-learning model trained on a broad genome database and is more accurate for novel lineages. CheckM remains an option with <code>--skip_checkm false</code> in nf-core/mag.
           </div>
 
-          <h3 id="step-2-checkm">Step 2 — CheckM (legacy/alternative)</h3>
+          <h3 id="step-2-checkm">Step 2: CheckM (legacy/alternative)</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/06-bin-qc/checkm
+          <pre><code>cat > scripts/binqc_02_checkm.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=binqc_02_checkm
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/binqc_02_checkm_%j.out
+#SBATCH --error=logs/binqc_02_checkm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/06-bin-qc/checkm
+
+module load checkm
 
 checkm lineage_wf \
     results/05-refinement/das_tool/mock_control_DASTool_bins/ \
@@ -103,41 +139,89 @@ checkm lineage_wf \
     --extension fa \
     --threads 8 \
     --tab_table \
-    -f results/06-bin-qc/checkm/checkm_summary.tsv</code></pre></div>
+    -f results/06-bin-qc/checkm/checkm_summary.tsv
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/binqc_02_checkm.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-3-busco">Step 3 — Gene Set Completeness with BUSCO</h3>
+          <h3 id="step-3-busco">Step 3: Gene Set Completeness with BUSCO</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/06-bin-qc/busco
+          <pre><code>cat > scripts/binqc_03_busco.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=binqc_03_busco
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/binqc_03_busco_%j.out
+#SBATCH --error=logs/binqc_03_busco_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/06-bin-qc/busco
+
+module load busco
 
 for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
-    name=$(basename ${bin%.fa})
+    name=$(basename "${bin%.fa}")
     busco \
-        -i $bin \
-        -o results/06-bin-qc/busco/$name \
+        -i "$bin" \
+        -o "results/06-bin-qc/busco/$name" \
         -m genome \
         -l bacteria_odb10 \
         -c 8 \
         --offline
-done</code></pre></div>
+done
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/binqc_03_busco.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-4-gunc">Step 4 — Chimera Detection with GUNC</h3>
+          <h3 id="step-4-gunc">Step 4: Chimera Detection with GUNC</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/06-bin-qc/gunc
+          <pre><code>cat > scripts/binqc_04_gunc.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=binqc_04_gunc
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/binqc_04_gunc_%j.out
+#SBATCH --error=logs/binqc_04_gunc_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/06-bin-qc/gunc
+
+module load gunc
 
 gunc run \
     --input_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --out_dir results/06-bin-qc/gunc \
-    --db_file /path/to/gunc_db/gunc_db_progenomes2.1.dmnd \
+    --db_file /ibex/project/c2xxx/databases/gunc_db/gunc_db_progenomes2.1.dmnd \
     --threads 8 \
     --file_suffix .fa
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/binqc_04_gunc.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-# Flag potentially chimeric bins (clade_separation_score < 0.45)
-awk -F'\t' 'NR==1 || $8 < 0.45' \
+          <p>Once complete, flag potentially chimeric bins interactively:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>awk -F'\t' 'NR==1 || $8 < 0.45' \
     results/06-bin-qc/gunc/GUNC.progenomes_2.1.maxCSS_level.tsv</code></pre></div>
 
-          <h3 id="step-5-quast">Step 5 — Assembly Statistics with QUAST</h3>
+          <h3 id="step-5-quast">Step 5: Assembly Statistics with QUAST</h3>
+          <p>QUAST runs quickly across all bins: run it interactively while waiting for other jobs.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/06-bin-qc/quast
+
+module load quast
 
 quast.py \
     results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa \
@@ -145,10 +229,9 @@ quast.py \
     --min-contig 500 \
     --threads 8</code></pre></div>
 
-          <h3 id="step-6-mimag-filter">Step 6 — Apply MIMAG Quality Thresholds</h3>
+          <h3 id="step-6-mimag-filter">Step 6: Apply MIMAG Quality Thresholds</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Classify bins from CheckM2 output
-awk -F'\t' 'NR==1 {print $0"\tMIMAG_quality"; next}
+          <pre><code>awk -F'\t' 'NR==1 {print $0"\tMIMAG_quality"; next}
 {
     if ($2 >= 90 && $3 <= 5) quality = "High-quality"
     else if ($2 >= 50 && $3 < 10) quality = "Medium-quality"
@@ -157,7 +240,6 @@ awk -F'\t' 'NR==1 {print $0"\tMIMAG_quality"; next}
 }' results/06-bin-qc/checkm2/quality_report.tsv \
     > results/06-bin-qc/bins_mimag_classified.tsv
 
-# Summary counts
 awk -F'\t' 'NR>1 {counts[$NF]++} END {for (q in counts) print q": "counts[q]}' \
     results/06-bin-qc/bins_mimag_classified.tsv</code></pre></div>
 
@@ -166,8 +248,8 @@ awk -F'\t' 'NR>1 {counts[$NF]++} END {for (q in counts) print q": "counts[q]}' \
             <thead><tr><th>Quality tier</th><th>Completeness</th><th>Contamination</th><th>Additional criteria</th></tr></thead>
             <tbody>
               <tr><td><strong>High-quality</strong></td><td>≥90%</td><td>≤5%</td><td>5S + 16S + 23S rRNA genes; ≥18 tRNA genes</td></tr>
-              <tr><td><strong>Medium-quality</strong></td><td>≥50%</td><td>&lt;10%</td><td>—</td></tr>
-              <tr><td><strong>Low-quality</strong></td><td>&lt;50%</td><td>any</td><td>—</td></tr>
+              <tr><td><strong>Medium-quality</strong></td><td>≥50%</td><td>&lt;10%</td><td>-</td></tr>
+              <tr><td><strong>Low-quality</strong></td><td>&lt;50%</td><td>any</td><td>-</td></tr>
             </tbody>
           </table>
 
@@ -176,12 +258,12 @@ awk -F'\t' 'NR>1 {counts[$NF]++} END {for (q in counts) print q": "counts[q]}' \
             <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
             <tbody>
               <tr><td><code>--skip_checkm2</code></td><td>false</td><td>Skip CheckM2</td></tr>
-              <tr><td><code>--checkm2_db</code></td><td>—</td><td>Path to CheckM2 DIAMOND database</td></tr>
+              <tr><td><code>--checkm2_db</code></td><td>-</td><td>Path to CheckM2 DIAMOND database</td></tr>
               <tr><td><code>--skip_checkm</code></td><td>false</td><td>Skip CheckM (legacy)</td></tr>
               <tr><td><code>--skip_busco</code></td><td>false</td><td>Skip BUSCO</td></tr>
-              <tr><td><code>--busco_db</code></td><td>—</td><td>Path to BUSCO lineage database</td></tr>
+              <tr><td><code>--busco_db</code></td><td>-</td><td>Path to BUSCO lineage database</td></tr>
               <tr><td><code>--skip_gunc</code></td><td>false</td><td>Skip GUNC chimera detection</td></tr>
-              <tr><td><code>--gunc_db</code></td><td>—</td><td>Path to GUNC ProGenomes database</td></tr>
+              <tr><td><code>--gunc_db</code></td><td>-</td><td>Path to GUNC ProGenomes database</td></tr>
             </tbody>
           </table>
 
@@ -215,12 +297,12 @@ awk -F'\t' 'NR>1 {counts[$NF]++} END {for (q in counts) print q": "counts[q]}' \
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
               <li><a href="#hands-on">Hands-on</a></li>
-              <li><a href="#step-1-checkm2">Step 1 — CheckM2</a></li>
-              <li><a href="#step-2-checkm">Step 2 — CheckM</a></li>
-              <li><a href="#step-3-busco">Step 3 — BUSCO</a></li>
-              <li><a href="#step-4-gunc">Step 4 — GUNC</a></li>
-              <li><a href="#step-5-quast">Step 5 — QUAST</a></li>
-              <li><a href="#step-6-mimag-filter">Step 6 — MIMAG Filter</a></li>
+              <li><a href="#step-1-checkm2">Step 1: CheckM2</a></li>
+              <li><a href="#step-2-checkm">Step 2: CheckM</a></li>
+              <li><a href="#step-3-busco">Step 3: BUSCO</a></li>
+              <li><a href="#step-4-gunc">Step 4: GUNC</a></li>
+              <li><a href="#step-5-quast">Step 5: QUAST</a></li>
+              <li><a href="#step-6-mimag-filter">Step 6: MIMAG Filter</a></li>
               <li><a href="#mimag-standards">MIMAG Standards</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>

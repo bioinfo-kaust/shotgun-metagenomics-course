@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 1</div>
-    <span class="module-number">MODULE 1 &mdash; Day 1</span>
+    <span class="module-number">MODULE 1, Day 1</span>
     <h1>QC &amp; Preprocessing</h1>
     <p>Adapter removal, host and PhiX decontamination, quality filtering, and coverage normalisation for short reads; adapter removal, quality filtering, and host decontamination for long reads.</p>
   </div>
@@ -60,9 +60,9 @@
           <div class="callout callout-note">
             <strong>Course dataset</strong>
             This module uses reads from a published synthetic mock community study
-            (<a href="https://doi.org/10.3389/fmicb.2019.01277" target="_blank" rel="noopener">Pereira-Marques et al., 2019</a> —
+            (<a href="https://doi.org/10.3389/fmicb.2019.01277" target="_blank" rel="noopener">Pereira-Marques et al., 2019</a>,
             BioProject <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA521492" target="_blank" rel="noopener">PRJNA521492</a>).
-            <strong>mock_control</strong> (SRR9291172) contains reads from 20 known bacterial species with no host contamination — you can verify your taxonomy results against the known ground truth in Module 7.
+            <strong>mock_control</strong> (SRR9291172) contains reads from 20 known bacterial species with no host contamination; you can verify your taxonomy results against the known ground truth in Module 7.
             A second sample, <strong>mock_ss90</strong> (SRR9291174), contains the same community spiked with 90% mouse host DNA, and is introduced in Step 3 to demonstrate why host read removal matters.
           </div>
 
@@ -82,29 +82,68 @@
             </tbody>
           </table>
 
-          <h2 id="short-read-qc">Part A — Short Read QC &amp; Preprocessing</h2>
+          <h2 id="short-read-qc">Part A: Short Read QC &amp; Preprocessing</h2>
 
-          <h3 id="step-1-raw-qc-with-fastqc">Step 1 — Raw QC with FastQC</h3>
+          <div class="callout callout-note">
+            <strong>One-time setup</strong>
+            Create the <code>scripts/</code> and <code>logs/</code> directories once at the start of this module. All batch scripts and their log files will live here throughout the course.
+          </div>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Navigate to your course working directory
+          <pre><code>cd /ibex/user/$USER/metagenomics_course
+mkdir -p scripts logs</code></pre></div>
+
+          <h3 id="step-1-raw-qc-with-fastqc">Step 1: Raw QC with FastQC</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/qc_01_fastqc.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_01_fastqc
+#SBATCH --partition=batch
+#SBATCH --time=00:30:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_01_fastqc_%j.out
+#SBATCH --error=logs/qc_01_fastqc_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
-
-module load fastqc
-
 mkdir -p results/01-qc/fastqc_raw
 
+module load fastqc
 fastqc \
     raw_reads/mock_control_1.fastq.gz \
     raw_reads/mock_control_2.fastq.gz \
     --outdir results/01-qc/fastqc_raw \
-    --threads 8</code></pre></div>
+    --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_01_fastqc.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-2-adapter-trimming-with-fastp">Step 2 — Adapter Trimming &amp; Quality Filtering with fastp</h3>
+          <h3 id="step-2-adapter-trimming-with-fastp">Step 2: Adapter Trimming &amp; Quality Filtering with fastp</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>module load fastp
+          <pre><code>cat > scripts/qc_02_fastp.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_02_fastp
+#SBATCH --partition=batch
+#SBATCH --time=00:30:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_02_fastp_%j.out
+#SBATCH --error=logs/qc_02_fastp_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/fastp
 
+module load fastp
 fastp \
     --in1 raw_reads/mock_control_1.fastq.gz \
     --in2 raw_reads/mock_control_2.fastq.gz \
@@ -115,30 +154,48 @@ fastp \
     --detect_adapter_for_pe \
     --qualified_quality_phred 20 \
     --length_required 50 \
-    --thread 8</code></pre></div>
+    --thread 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_02_fastp.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-3-host-read-removal">Step 3 — Host Read Removal with Bowtie2</h3>
+          <h3 id="step-3-host-read-removal">Step 3: Host Read Removal with Bowtie2</h3>
 
           <div class="callout callout-tip">
-            <strong>Why host removal matters — mock_ss90 demonstration</strong>
-            The <strong>mock_ss90</strong> sample (SRR9291174) was deliberately spiked with 90% mouse (<em>C57BL/6</em>) host DNA. Running host removal on it removes ~90% of reads, leaving only the microbial fraction. Try running the command below on both <code>mock_control</code> (0% host) and <code>mock_ss90</code> (90% host) and compare the log files — you will see a dramatic difference in the number of reads discarded.
+            <strong>Why host removal matters: mock_ss90 demonstration</strong>
+            The mock_ss90 sample (SRR9291174) was deliberately spiked with 90% mouse (<em>C57BL/6</em>) host DNA. Running host removal on it removes ~90% of reads, leaving only the microbial fraction. The script below runs on both <code>mock_control</code> (0% host) and <code>mock_ss90</code> (90% host); compare the log output to see the dramatic difference in the number of reads discarded.
           </div>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>module load bowtie2 samtools
+          <pre><code>cat > scripts/qc_03_host_removal.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_03_host
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_03_host_%j.out
+#SBATCH --error=logs/qc_03_host_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/host_removal db/host_index
 
-# Reference genome: C57BL/6 mouse GRCm39 (NCBI: GCA_000001635.9)
-# Pre-staged by instructors — path provided on Day 1
-HOST_REF=/ibex/project/c2xxx/metagenomics_course/references/GRCm39_GCA_000001635.9.fa
+# Reference genome: C57BL/6 mouse GRCm39 (pre-staged by instructors)
+HOST_REF=/biocorelab/BIX/resources/genomes/mus_musculus/release-113/Mus_musculus.GRCm39.dna_sm.toplevel.fa
 
-# Build Bowtie2 index (run once per session or use pre-built index if available)
-bowtie2-build \
-    $HOST_REF \
-    db/host_index/GRCm39
+module load bowtie2 samtools
 
-# Align and extract unmapped (non-host) reads — mock_control
+# Build index once; skipped if already present
+if [ ! -f db/host_index/GRCm39.1.bt2 ]; then
+    bowtie2-build $HOST_REF db/host_index/GRCm39
+fi
+
+# mock_control (0% host)
 bowtie2 \
     -x db/host_index/GRCm39 \
     -1 results/01-qc/fastp/mock_control_1.trimmed.fastq.gz \
@@ -147,7 +204,7 @@ bowtie2 \
     -p 8 --sensitive \
     -S /dev/null 2> results/01-qc/host_removal/mock_control.host.log
 
-# Optional: run on mock_ss90 to see the effect of 90% host contamination
+# mock_ss90 (90% host); compare to see effect of contamination
 bowtie2 \
     -x db/host_index/GRCm39 \
     -1 raw_reads/mock_ss90_1.fastq.gz \
@@ -156,110 +213,254 @@ bowtie2 \
     -p 8 --sensitive \
     -S /dev/null 2> results/01-qc/host_removal/mock_ss90.host.log
 
-# Compare how many reads were removed
-grep "overall alignment rate" results/01-qc/host_removal/*.host.log</code></pre></div>
+grep "overall alignment rate" results/01-qc/host_removal/*.host.log
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_03_host_removal.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
+          <div class="callout callout-tip">
+            <strong>bowtie2 note</strong>
+            <code>bowtie2 --un-conc-gz</code>&nbsp;&nbsp;&nbsp;&nbsp;
+            Write paired-end reads that fail to align concordantly to file(s) at &lt;path&gt;. These reads correspond to the SAM records with the FLAGS 0x4 bit set and either the 0x40 or 0x80 bit set (depending on whether it's mate #1 or #2).<br /><br />
+              <strong>SAM flags</strong>
+              <code>4 (0x4)</code>: The segment is unmapped.<br />
+              <code>64 (0x40)</code>: This is the first read in the pair.<br />
+              <code>128 (0x80)</code>: This is the last read in the pair.
+          </div>
           <div class="callout callout-note">
             <strong>nf-core/mag</strong>
-            Provide the host genome with <code>--host_fasta /ibex/project/c2xxx/metagenomics_course/references/GRCm39_GCA_000001635.9.fa</code>. The pipeline builds the Bowtie2 index automatically and reports host removal statistics per sample.
+            Provide the host genome with <code>--host_fasta /biocorelab/BIX/resources/genomes/mus_musculus/release-113/Mus_musculus.GRCm39.dna_sm.toplevel.fa</code>. The pipeline builds the Bowtie2 index automatically and reports host removal statistics per sample.
           </div>
 
-          <h3 id="step-4-phix-removal">Step 4 — PhiX Spike-in Removal with Bowtie2</h3>
+          <h3 id="step-4-phix-removal">Step 4: PhiX Spike-in Removal with Bowtie2</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p db/phix_index
+          <pre><code>cat > scripts/qc_04_phix_removal.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_04_phix
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_04_phix_%j.out
+#SBATCH --error=logs/qc_04_phix_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Build PhiX index once (PhiX174 genome, NCBI accession J02482)
-bowtie2-build \
-    /ibex/project/c2xxx/metagenomics_course/references/phix174.fa \
-    db/phix_index/phix
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
 
-# Remove PhiX reads
+PHIX_URL="ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/viral/Enterobacteria_phage_phiX174_sensu_lato/all_assembly_versions/GCA_002596845.1_ASM259684v1/GCA_002596845.1_ASM259684v1_genomic.fna.gz"
+if [ ! -f references/phix174.fna.gz ]; then
+    mkdir -p references db/phix_index
+    wget -q "$PHIX_URL" -O references/phix174.fna.gz
+fi
+
+module load bowtie2
+
+# Build PhiX index once; skipped if already present
+if [ ! -f db/phix_index/phix.1.bt2 ]; then
+    bowtie2-build references/phix174.fna.gz db/phix_index/phix
+fi
+
 bowtie2 \
     -x db/phix_index/phix \
     -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
     -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     --un-conc-gz results/01-qc/host_removal/mock_control_%.phix_removed.fastq.gz \
     -p 8 --sensitive \
-    -S /dev/null 2> results/01-qc/host_removal/mock_control.phix.log</code></pre></div>
+    -S /dev/null 2> results/01-qc/host_removal/mock_control.phix.log
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_04_phix_removal.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-5-coverage-normalisation">Step 5 — Coverage Normalisation with BBNorm</h3>
+          <h3 id="step-5-coverage-normalisation">Step 5 [optional]: Coverage Normalisation with BBNorm</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>module load bbmap
+          <pre><code>cat > scripts/qc_05_bbnorm.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_05_bbnorm
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_05_bbnorm_%j.out
+#SBATCH --error=logs/qc_05_bbnorm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/bbnorm
 
+module load bbtools
 bbnorm.sh \
     in=results/01-qc/host_removal/mock_control_1.phix_removed.fastq.gz \
     in2=results/01-qc/host_removal/mock_control_2.phix_removed.fastq.gz \
     out=results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
     out2=results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
-    target=100 min=5 threads=8</code></pre></div>
+    target=100 min=5 threads=8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_05_bbnorm.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-warning">
             <strong>When to normalise</strong>
             BBNorm is most beneficial for highly complex communities (soil, sediment) with extreme coverage variation. For samples with more even coverage (e.g. gut), it may not be necessary and can reduce rare-taxon representation. Enable with <code>--bbnorm true</code> in nf-core/mag.
           </div>
 
-          <h2 id="long-read-qc">Part B — Long Read QC &amp; Preprocessing</h2>
+          <h2 id="long-read-qc">Part B: Long Read QC &amp; Preprocessing</h2>
 
-          <h3 id="step-6-nanoplot">Step 6 — Long Read Quality Assessment with NanoPlot</h3>
+          <div class="callout callout-note">
+            <strong>Course dataset: long reads</strong>
+            The long-read section uses a Zymo ZymoBIOMICS mock community dataset sequenced on Oxford Nanopore GridION with R10 high-accuracy (R10HC) chemistry: an even-abundance community of 10 microbial species. Download it in <a href="setup.html#step-6">Setup Step 6</a> before running these scripts; it will be saved as <code>raw_reads/zymo_long.fastq.gz</code>.
+          </div>
+
+          <h3 id="step-6-nanoplot">Step 6: Long Read Quality Assessment with NanoPlot</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/01-qc/nanoplot
+          <pre><code>cat > scripts/qc_06_nanoplot.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_06_nanoplot
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_06_nanoplot_%j.out
+#SBATCH --error=logs/qc_06_nanoplot_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/01-qc/nanoplot
+
+module load nanoplot
 NanoPlot \
-    --fastq data/reads/sample_long.fastq.gz \
+    --fastq raw_reads/zymo_long.fastq.gz \
     --outdir results/01-qc/nanoplot \
-    --prefix sample \
+    --prefix zymo_long \
     --threads 8 \
-    --plots hex dot</code></pre></div>
+    --plots hex dot
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_06_nanoplot.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-7-porechop">Step 7 — Adapter Removal with Porechop_ABI</h3>
+          <h3 id="step-7-porechop">Step 7: Adapter Removal with Porechop_ABI</h3>
           <p>Porechop_ABI automatically identifies and removes sequencing adapters from ONT reads, including novel adapters not in the standard database.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/01-qc/porechop
+          <pre><code>cat > scripts/qc_07_porechop.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_07_porechop
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_07_porechop_%j.out
+#SBATCH --error=logs/qc_07_porechop_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/01-qc/porechop
+
+module load porechop_abi
 porechop_abi \
-    -i data/reads/sample_long.fastq.gz \
-    -o results/01-qc/porechop/sample.porechop.fastq.gz \
-    --threads 8</code></pre></div>
+    -i raw_reads/zymo_long.fastq.gz \
+    -o results/01-qc/porechop/zymo_long.porechop.fastq.gz \
+    --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_07_porechop.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-8-long-read-filtering">Step 8 — Quality &amp; Length Filtering</h3>
-          <p>Three complementary options for long read filtering — choose based on your use case:</p>
+          <h3 id="step-8-long-read-filtering">Step 8: Quality &amp; Length Filtering</h3>
+          <p>Three complementary options for long read filtering. Option A (Chopper) is the default; uncomment Options B or C to use instead.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/01-qc/filtered
+          <pre><code>cat > scripts/qc_08_filtering.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_08_filter
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_08_filter_%j.out
+#SBATCH --error=logs/qc_08_filter_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Option A: Chopper — quality + minimum length filter
-gunzip -c results/01-qc/porechop/sample.porechop.fastq.gz | \
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/01-qc/filtered
+
+# Option A: Chopper; quality + minimum length filter
+module load chopper
+gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
     chopper --quality 8 --minlength 1000 --threads 8 | \
-    gzip > results/01-qc/filtered/sample.chopper.fastq.gz
+    gzip > results/01-qc/filtered/zymo_long.chopper.fastq.gz
 
-# Option B: Filtlong — keep best reads by length and quality
-filtlong \
-    --min_length 1000 \
-    --keep_percent 90 \
-    results/01-qc/porechop/sample.porechop.fastq.gz | \
-    gzip > results/01-qc/filtered/sample.filtlong.fastq.gz
+# Option B: Filtlong; keep best reads by length and quality (uncomment to use)
+# module load filtlong
+# filtlong \
+#     --min_length 1000 \
+#     --keep_percent 90 \
+#     results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
+#     gzip > results/01-qc/filtered/zymo_long.filtlong.fastq.gz
 
-# Option C: Nanoq — fast filtering with JSON statistics
-nanoq \
-    --input results/01-qc/porechop/sample.porechop.fastq.gz \
-    --output results/01-qc/filtered/sample.nanoq.fastq.gz \
-    --min-len 1000 --min-qual 8 \
-    --report results/01-qc/filtered/sample.nanoq.json</code></pre></div>
+# Option C: Nanoq; fast filtering with JSON statistics (uncomment to use)
+# module load nanoq
+# nanoq \
+#     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
+#     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
+#     --min-len 1000 --min-qual 8 \
+#     --report results/01-qc/filtered/zymo_long.nanoq.json
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_08_filtering.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-9-long-read-host-removal">Step 9 — Long Read Host Removal with Minimap2</h3>
+          <h3 id="step-9-long-read-host-removal">Step 9: Long Read Host Removal with Minimap2</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/01-qc/long_host_removed
+          <pre><code>cat > scripts/qc_09_longhost_removal.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_09_longhost
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/qc_09_longhost_%j.out
+#SBATCH --error=logs/qc_09_longhost_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Align to host genome; extract unmapped (non-host) reads
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/01-qc/long_host_removed
+
+# Host reference (same GRCm39 as used for short reads).
+# Zymo is a pure microbial mock community; alignment rate will be ~0%,
+# which is the expected result and demonstrates the workflow.
+HOST_REF=/biocorelab/BIX/resources/genomes/mus_musculus/release-113/Mus_musculus.GRCm39.dna_sm.toplevel.fa
+
+module load minimap2 samtools
 minimap2 \
     -ax map-ont \
-    data/reference/host_genome.fa \
-    results/01-qc/filtered/sample.chopper.fastq.gz \
+    $HOST_REF \
+    results/01-qc/filtered/zymo_long.chopper.fastq.gz \
     -t 8 | \
 samtools view -b -f 4 | \
 samtools fastq - | \
-gzip > results/01-qc/long_host_removed/sample.decontam.fastq.gz</code></pre></div>
+gzip > results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_09_longhost_removal.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
           <table>
@@ -267,7 +468,7 @@ gzip > results/01-qc/long_host_removed/sample.decontam.fastq.gz</code></pre></di
             <tbody>
               <tr><td><code>--skip_fastqc</code></td><td>false</td><td>Skip FastQC quality reports</td></tr>
               <tr><td><code>--skip_fastp</code></td><td>false</td><td>Skip fastp adapter trimming</td></tr>
-              <tr><td><code>--host_fasta</code></td><td>—</td><td>Host genome FASTA for short-read decontamination</td></tr>
+              <tr><td><code>--host_fasta</code></td><td>-</td><td>Host genome FASTA for short-read decontamination</td></tr>
               <tr><td><code>--host_removal_verysensitive</code></td><td>false</td><td>Use <code>--very-sensitive</code> Bowtie2 mode</td></tr>
               <tr><td><code>--bbnorm</code></td><td>false</td><td>Enable BBNorm coverage normalisation</td></tr>
               <tr><td><code>--bbnorm_target</code></td><td>100</td><td>Target coverage depth for BBNorm</td></tr>
@@ -289,17 +490,19 @@ gzip > results/01-qc/long_host_removed/sample.decontam.fastq.gz</code></pre></di
 ├── host_removal/
 │   ├── mock_control_1.host_removed.fastq.gz
 │   ├── mock_control_1.phix_removed.fastq.gz
-│   ├── mock_ss90_1.host_removed.fastq.gz   ← optional demo
+│   ├── mock_ss90_1.host_removed.fastq.gz
 │   └── mock_control.host.log
 ├── bbnorm/
 │   └── mock_control_1.norm.fastq.gz
 ├── nanoplot/
-│   ├── sample_longNanoPlot-report.html
-│   └── sample_longNanoStats.txt
+│   ├── zymo_longNanoPlot-report.html
+│   └── zymo_longNanoStats.txt
 ├── porechop/
-│   └── sample_long.porechop.fastq.gz
-└── filtered/
-    └── sample_long.chopper.fastq.gz</code></pre>
+│   └── zymo_long.porechop.fastq.gz
+├── filtered/
+│   └── zymo_long.chopper.fastq.gz
+└── long_host_removed/
+    └── zymo_long.decontam.fastq.gz</code></pre>
 
           <div style="display:flex; gap:1rem; margin-top:3rem;">
             <a href="modules.html" class="btn btn-secondary">&larr; All Modules</a>
@@ -315,17 +518,17 @@ gzip > results/01-qc/long_host_removed/sample.decontam.fastq.gz</code></pre></di
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
-              <li><a href="#short-read-qc">Part A — Short Read QC</a></li>
-              <li><a href="#step-1-raw-qc-with-fastqc">Step 1 — FastQC</a></li>
-              <li><a href="#step-2-adapter-trimming-with-fastp">Step 2 — fastp</a></li>
-              <li><a href="#step-3-host-read-removal">Step 3 — Host Removal</a></li>
-              <li><a href="#step-4-phix-removal">Step 4 — PhiX Removal</a></li>
-              <li><a href="#step-5-coverage-normalisation">Step 5 — BBNorm</a></li>
-              <li><a href="#long-read-qc">Part B — Long Read QC</a></li>
-              <li><a href="#step-6-nanoplot">Step 6 — NanoPlot</a></li>
-              <li><a href="#step-7-porechop">Step 7 — Porechop_ABI</a></li>
-              <li><a href="#step-8-long-read-filtering">Step 8 — Filtering</a></li>
-              <li><a href="#step-9-long-read-host-removal">Step 9 — Host Removal</a></li>
+              <li><a href="#short-read-qc">Part A: Short Read QC</a></li>
+              <li><a href="#step-1-raw-qc-with-fastqc">Step 1: FastQC</a></li>
+              <li><a href="#step-2-adapter-trimming-with-fastp">Step 2: fastp</a></li>
+              <li><a href="#step-3-host-read-removal">Step 3: Host Removal</a></li>
+              <li><a href="#step-4-phix-removal">Step 4: PhiX Removal</a></li>
+              <li><a href="#step-5-coverage-normalisation">Step 5: BBNorm</a></li>
+              <li><a href="#long-read-qc">Part B: Long Read QC</a></li>
+              <li><a href="#step-6-nanoplot">Step 6: NanoPlot</a></li>
+              <li><a href="#step-7-porechop">Step 7: Porechop_ABI</a></li>
+              <li><a href="#step-8-long-read-filtering">Step 8: Filtering</a></li>
+              <li><a href="#step-9-long-read-host-removal">Step 9: Host Removal</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>

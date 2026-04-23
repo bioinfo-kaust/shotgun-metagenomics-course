@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 2</div>
-    <span class="module-number">MODULE 2 &mdash; Day 2, Morning</span>
+    <span class="module-number">MODULE 2, Day 2, Morning</span>
     <h1>Assembly, Evaluation &amp; Annotation</h1>
     <p>Assemble cleaned reads into contigs, evaluate assembly quality, map reads for coverage, predict genes with Prodigal, and identify viral and plasmid sequences with geNomad.</p>
   </div>
@@ -54,7 +54,7 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p>De novo assembly reconstructs genomes from overlapping reads without a reference. In metagenomics, each assembler uses different strategies: MEGAHIT uses succinct de Bruijn graphs optimised for memory efficiency; metaSPAdes uses iterative k-mer sizes and is better for complex communities; Flye uses repeat graphs suited to long reads. After assembly, coverage depth is obtained by re-mapping reads — essential for binning. Prodigal predicts ORFs at contig level (metagenome mode), providing gene coordinates that feed downstream annotation. geNomad identifies mobile genetic elements that should not be co-binned with chromosomal sequences.</p>
+          <p>De novo assembly reconstructs genomes from overlapping reads without a reference. In metagenomics, each assembler uses different strategies: MEGAHIT uses succinct de Bruijn graphs optimised for memory efficiency; metaSPAdes uses iterative k-mer sizes and is better for complex communities; Flye uses repeat graphs suited to long reads. After assembly, coverage depth is obtained by re-mapping reads, essential for binning. Prodigal predicts ORFs at contig level (metagenome mode), providing gene coordinates that feed downstream annotation. geNomad identifies mobile genetic elements that should not be co-binned with chromosomal sequences.</p>
 
           <h2 id="tools">Tools</h2>
           <table>
@@ -73,16 +73,38 @@
             </tbody>
           </table>
 
-          <h2 id="short-read-assembly">Part A — Short Read Assembly</h2>
+          <h2 id="short-read-assembly">Part A: Short Read Assembly</h2>
 
-          <h3 id="step-1-megahit">Step 1 — Assemble with MEGAHIT</h3>
+          <div class="callout callout-note">
+            <strong>One-time setup</strong>
+            Create the <code>scripts/</code> and <code>logs/</code> directories once at the start of this module. All batch scripts and their log files will live here throughout the course.
+          </div>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Navigate to your course working directory
+          <pre><code>cd /ibex/user/$USER/metagenomics_course
+mkdir -p scripts logs</code></pre></div>
+
+          <h3 id="step-1-megahit">Step 1: Assemble with MEGAHIT</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/asm_01_megahit.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_01_megahit
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_01_megahit_%j.out
+#SBATCH --error=logs/asm_01_megahit_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/megahit
 
 module load megahit
-
-mkdir -p results/02-assembly/megahit
 
 megahit \
     -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
@@ -90,11 +112,32 @@ megahit \
     --out-dir results/02-assembly/megahit \
     --out-prefix mock_control \
     --min-contig-len 500 \
-    -t 16</code></pre></div>
+    -t 16
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_01_megahit.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-2-metaspades">Step 2 — Assemble with metaSPAdes</h3>
+          <h3 id="step-2-metaspades">Step 2: Assemble with metaSPAdes</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/metaspades
+          <pre><code>cat > scripts/asm_02_metaspades.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_02_metaspades
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_02_metaspades_%j.out
+#SBATCH --error=logs/asm_02_metaspades_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/metaspades
+
+module load spades
 
 spades.py \
     --meta \
@@ -102,52 +145,120 @@ spades.py \
     -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     -o results/02-assembly/metaspades \
     --threads 16 \
-    --memory 128</code></pre></div>
+    --memory 128
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_02_metaspades.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-3-hybrid-assembly">Step 3 — Hybrid Assembly with SPAdes</h3>
+          <h3 id="step-3-hybrid-assembly">Step 3: Hybrid Assembly with SPAdes</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/hybrid
+          <pre><code>cat > scripts/asm_03_hybrid_spades.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_03_hybrid_spades
+#SBATCH --partition=batch
+#SBATCH --time=06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_03_hybrid_spades_%j.out
+#SBATCH --error=logs/asm_03_hybrid_spades_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/hybrid
+
+module load spades
 
 spades.py \
     --meta \
     -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
     -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
-    --nanopore results/01-qc/long_host_removed/sample_long.decontam.fastq.gz \
+    --nanopore results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz \
     -o results/02-assembly/hybrid \
     --threads 16 \
-    --memory 128</code></pre></div>
+    --memory 128
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_03_hybrid_spades.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h2 id="long-read-assembly">Part B — Long Read Assembly</h2>
+          <h2 id="long-read-assembly">Part B: Long Read Assembly</h2>
 
-          <h3 id="step-4-flye">Step 4 — Assemble with Flye</h3>
+          <h3 id="step-4-flye">Step 4: Assemble with Flye</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/flye
+          <pre><code>cat > scripts/asm_04_flye.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_04_flye
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_04_flye_%j.out
+#SBATCH --error=logs/asm_04_flye_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/flye
+
+module load flye
 
 flye \
-    --nano-raw results/01-qc/long_host_removed/sample.decontam.fastq.gz \
+    --nano-hq results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz \
     --out-dir results/02-assembly/flye \
     --meta \
-    --threads 16</code></pre></div>
+    --threads 16
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_04_flye.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>Flye read type flags</strong>
             Use <code>--nano-raw</code> for older Guppy basecalling, <code>--nano-hq</code> for high-accuracy basecalled reads (Q20+), and <code>--pacbio-raw</code> / <code>--pacbio-hifi</code> for PacBio data.
           </div>
 
-          <h3 id="step-5-metamdbg">Step 5 — Assemble with metaMDBG</h3>
+          <h3 id="step-5-metamdbg">Step 5: Assemble with metaMDBG</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/metamdbg
+          <pre><code>cat > scripts/asm_05_metamdbg.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_05_metamdbg
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_05_metamdbg_%j.out
+#SBATCH --error=logs/asm_05_metamdbg_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/metamdbg
+
+module load metamdbg
 
 metaMDBG asm \
     --out-dir results/02-assembly/metamdbg \
-    --in-ont results/01-qc/long_host_removed/sample.decontam.fastq.gz \
-    --threads 16</code></pre></div>
+    --in-ont results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz \
+    --threads 16
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_05_metamdbg.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h2 id="assembly-evaluation">Part C — Assembly Evaluation</h2>
+          <h2 id="assembly-evaluation">Part C: Assembly Evaluation</h2>
 
-          <h3 id="step-6-quast">Step 6 — Assembly Statistics with QUAST</h3>
+          <h3 id="step-6-quast">Step 6: Assembly Statistics with QUAST</h3>
+          <p>QUAST runs in seconds on typical assemblies: run it interactively while you wait for assembler jobs to finish.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/02-assembly/quast
+
+module load quast
 
 quast.py \
     results/02-assembly/megahit/mock_control.contigs.fa \
@@ -157,13 +268,32 @@ quast.py \
     --threads 8 \
     --labels "MEGAHIT,metaSPAdes"</code></pre></div>
 
-          <h3 id="step-7-ale">Step 7 — Assembly Likelihood Evaluation with ALE</h3>
-          <p>ALE scores assemblies by mapping reads back and computing alignment likelihood — useful for selecting the best assembler output.</p>
+          <h3 id="step-7-ale">Step 7: Assembly Likelihood Evaluation with ALE</h3>
+          <p>ALE scores assemblies by mapping reads back and computing alignment likelihood: useful for selecting the best assembler output.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/ale
+          <pre><code>cat > scripts/asm_07_ale.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_07_ale
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/asm_07_ale_%j.out
+#SBATCH --error=logs/asm_07_ale_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Map reads to assembly
-bowtie2-build results/02-assembly/megahit/mock_control.contigs.fa \
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/ale
+
+module load bowtie2 samtools ale
+
+bowtie2-build \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/ale/megahit_idx
 
 bowtie2 \
@@ -174,24 +304,43 @@ bowtie2 \
 samtools sort -o results/02-assembly/ale/megahit.sorted.bam
 samtools index results/02-assembly/ale/megahit.sorted.bam
 
-# Run ALE
 ALE \
     results/02-assembly/ale/megahit.sorted.bam \
     results/02-assembly/megahit/mock_control.contigs.fa \
-    results/02-assembly/ale/megahit.ale</code></pre></div>
+    results/02-assembly/ale/megahit.ale
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_07_ale.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h2 id="coverage-mapping">Part D — Coverage Mapping</h2>
+          <h2 id="coverage-mapping">Part D: Coverage Mapping</h2>
 
-          <h3 id="step-8-bowtie2-coverage">Step 8 — Map Short Reads for Coverage (Bowtie2)</h3>
+          <h3 id="step-8-bowtie2-coverage">Step 8: Map Short Reads for Coverage (Bowtie2)</h3>
+          <p>The BAM produced here feeds directly into binning (Module 4): the coverage file tells binners how much each contig is represented across samples.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/coverage
+          <pre><code>cat > scripts/asm_08_bowtie2_coverage.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_08_bowtie2_coverage
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/asm_08_bowtie2_coverage_%j.out
+#SBATCH --error=logs/asm_08_bowtie2_coverage_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Build index on chosen assembly
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/coverage
+
+module load bowtie2 samtools
+
 bowtie2-build \
     results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/coverage/assembly_idx
 
-# Align reads
 bowtie2 \
     -x results/02-assembly/coverage/assembly_idx \
     -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
@@ -200,25 +349,51 @@ bowtie2 \
 samtools sort -o results/02-assembly/coverage/mock_control.sorted.bam
 samtools index results/02-assembly/coverage/mock_control.sorted.bam
 
-# Compute per-contig coverage depth
 samtools coverage results/02-assembly/coverage/mock_control.sorted.bam \
-    > results/02-assembly/coverage/mock_control.coverage.tsv</code></pre></div>
+    > results/02-assembly/coverage/mock_control.coverage.tsv
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_08_bowtie2_coverage.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-9-minimap2-coverage">Step 9 — Map Long Reads for Coverage (Minimap2)</h3>
+          <h3 id="step-9-minimap2-coverage">Step 9: Map Long Reads for Coverage (Minimap2)</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>minimap2 \
+          <pre><code>cat > scripts/asm_09_minimap2_coverage.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_09_minimap2_coverage
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/asm_09_minimap2_coverage_%j.out
+#SBATCH --error=logs/asm_09_minimap2_coverage_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+
+module load minimap2 samtools
+
+minimap2 \
     -ax map-ont \
     results/02-assembly/flye/assembly.fasta \
-    results/01-qc/long_host_removed/sample.decontam.fastq.gz \
+    results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz \
     -t 8 | \
-samtools sort -o results/02-assembly/coverage/sample_long.sorted.bam
-samtools index results/02-assembly/coverage/sample_long.sorted.bam</code></pre></div>
+samtools sort -o results/02-assembly/coverage/zymo_long.sorted.bam
+samtools index results/02-assembly/coverage/zymo_long.sorted.bam
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_09_minimap2_coverage.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h2 id="contig-annotation">Part E — Contig Annotation</h2>
+          <h2 id="contig-annotation">Part E: Contig Annotation</h2>
 
-          <h3 id="step-10-prodigal">Step 10 — Gene Prediction with Prodigal</h3>
+          <h3 id="step-10-prodigal">Step 10: Gene Prediction with Prodigal</h3>
+          <p>Prodigal completes in under a minute for typical metagenome assemblies: run it interactively.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/02-assembly/prodigal
+
+module load prodigal
 
 prodigal \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
@@ -233,16 +408,37 @@ prodigal \
             The default <code>-p single</code> mode assumes a single genome and performs poorly on short, anonymous metagenomic contigs.
           </div>
 
-          <h3 id="step-11-genomad">Step 11 — Virus &amp; Plasmid Detection with geNomad</h3>
+          <h3 id="step-11-genomad">Step 11: Virus &amp; Plasmid Detection with geNomad</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/02-assembly/genomad
+          <pre><code>cat > scripts/asm_11_genomad.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_11_genomad
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/asm_11_genomad_%j.out
+#SBATCH --error=logs/asm_11_genomad_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/genomad
+
+module load genomad
 
 genomad end-to-end \
     results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/genomad \
-    /path/to/genomad_db \
+    /ibex/project/c2xxx/databases/genomad_db \
     --threads 8 \
-    --cleanup</code></pre></div>
+    --cleanup
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_11_genomad.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>geNomad output</strong>
@@ -254,12 +450,12 @@ genomad end-to-end \
             <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
             <tbody>
               <tr><td><code>--assembler</code></td><td>megahit</td><td>Assembler: <code>megahit</code>, <code>spades</code></td></tr>
-              <tr><td><code>--spades_options</code></td><td>—</td><td>Extra SPAdes flags</td></tr>
-              <tr><td><code>--megahit_options</code></td><td>—</td><td>Extra MEGAHIT flags</td></tr>
+              <tr><td><code>--spades_options</code></td><td>-</td><td>Extra SPAdes flags</td></tr>
+              <tr><td><code>--megahit_options</code></td><td>-</td><td>Extra MEGAHIT flags</td></tr>
               <tr><td><code>--skip_quast</code></td><td>false</td><td>Skip QUAST assembly evaluation</td></tr>
               <tr><td><code>--skip_prodigal</code></td><td>false</td><td>Skip Prodigal gene prediction</td></tr>
               <tr><td><code>--run_virus_identification</code></td><td>false</td><td>Run geNomad virus/plasmid detection</td></tr>
-              <tr><td><code>--genomad_db</code></td><td>—</td><td>Path to geNomad database</td></tr>
+              <tr><td><code>--genomad_db</code></td><td>-</td><td>Path to geNomad database</td></tr>
               <tr><td><code>--longreads_use_illumina_backbone</code></td><td>false</td><td>Use hybrid SPAdes assembly with Illumina backbone</td></tr>
             </tbody>
           </table>
@@ -299,22 +495,22 @@ genomad end-to-end \
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
-              <li><a href="#short-read-assembly">Part A — Short Read Assembly</a></li>
-              <li><a href="#step-1-megahit">Step 1 — MEGAHIT</a></li>
-              <li><a href="#step-2-metaspades">Step 2 — metaSPAdes</a></li>
-              <li><a href="#step-3-hybrid-assembly">Step 3 — Hybrid SPAdes</a></li>
-              <li><a href="#long-read-assembly">Part B — Long Read Assembly</a></li>
-              <li><a href="#step-4-flye">Step 4 — Flye</a></li>
-              <li><a href="#step-5-metamdbg">Step 5 — metaMDBG</a></li>
-              <li><a href="#assembly-evaluation">Part C — Evaluation</a></li>
-              <li><a href="#step-6-quast">Step 6 — QUAST</a></li>
-              <li><a href="#step-7-ale">Step 7 — ALE</a></li>
-              <li><a href="#coverage-mapping">Part D — Coverage Mapping</a></li>
-              <li><a href="#step-8-bowtie2-coverage">Step 8 — Bowtie2</a></li>
-              <li><a href="#step-9-minimap2-coverage">Step 9 — Minimap2</a></li>
-              <li><a href="#contig-annotation">Part E — Annotation</a></li>
-              <li><a href="#step-10-prodigal">Step 10 — Prodigal</a></li>
-              <li><a href="#step-11-genomad">Step 11 — geNomad</a></li>
+              <li><a href="#short-read-assembly">Part A: Short Read Assembly</a></li>
+              <li><a href="#step-1-megahit">Step 1: MEGAHIT</a></li>
+              <li><a href="#step-2-metaspades">Step 2: metaSPAdes</a></li>
+              <li><a href="#step-3-hybrid-assembly">Step 3: Hybrid SPAdes</a></li>
+              <li><a href="#long-read-assembly">Part B: Long Read Assembly</a></li>
+              <li><a href="#step-4-flye">Step 4: Flye</a></li>
+              <li><a href="#step-5-metamdbg">Step 5: metaMDBG</a></li>
+              <li><a href="#assembly-evaluation">Part C: Evaluation</a></li>
+              <li><a href="#step-6-quast">Step 6: QUAST</a></li>
+              <li><a href="#step-7-ale">Step 7: ALE</a></li>
+              <li><a href="#coverage-mapping">Part D: Coverage Mapping</a></li>
+              <li><a href="#step-8-bowtie2-coverage">Step 8: Bowtie2</a></li>
+              <li><a href="#step-9-minimap2-coverage">Step 9: Minimap2</a></li>
+              <li><a href="#contig-annotation">Part E: Annotation</a></li>
+              <li><a href="#step-10-prodigal">Step 10: Prodigal</a></li>
+              <li><a href="#step-11-genomad">Step 11: geNomad</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>

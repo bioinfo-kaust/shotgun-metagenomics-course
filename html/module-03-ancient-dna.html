@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 3</div>
-    <span class="module-number">MODULE 3 &mdash; Day 2, Afternoon</span>
+    <span class="module-number">MODULE 3, Day 2, Afternoon</span>
     <h1>Ancient DNA Analysis</h1>
     <p>Identify and quantify DNA damage patterns characteristic of ancient samples, call consensus variants, and correct assemblies for deamination damage using PyDamage, FreeBayes, and BCFtools.</p>
   </div>
@@ -52,7 +52,7 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p>Ancient DNA (aDNA) is characterised by hydrolytic deamination of cytosine to uracil, which is read as thymine during sequencing. This produces a C→T excess at the 5' end of reads and a complementary G→A excess at the 3' end — the diagnostic damage pattern. PyDamage models this damage per contig, allowing contigs with significant aDNA signal to be identified. Once damage-affected contigs are confirmed, FreeBayes calls consensus variants, and BCFtools applies them to produce a corrected FASTA. This workflow is optional in nf-core/mag and is activated for samples where ancient origin is expected.</p>
+          <p>Ancient DNA (aDNA) is characterised by hydrolytic deamination of cytosine to uracil, which is read as thymine during sequencing. This produces a C→T excess at the 5' end of reads and a complementary G→A excess at the 3' end: the diagnostic damage pattern. PyDamage models this damage per contig, allowing contigs with significant aDNA signal to be identified. Once damage-affected contigs are confirmed, FreeBayes calls consensus variants, and BCFtools applies them to produce a corrected FASTA. This workflow is optional in nf-core/mag and is activated for samples where ancient origin is expected.</p>
 
           <h2 id="tools">Tools</h2>
           <table>
@@ -66,70 +66,135 @@
 
           <h2 id="hands-on">Hands-on</h2>
 
-          <h3 id="step-1-map-reads">Step 1 — Map Reads to Assembled Contigs</h3>
-          <p>Ancient DNA analysis requires an alignment BAM file. If not already generated in Module 2, map your reads now:</p>
+          <h3 id="step-1-map-reads">Step 1: Map Reads to Assembled Contigs</h3>
+          <p>Ancient DNA analysis requires an alignment BAM file. Map the QC-filtered reads to the MEGAHIT assembly:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/03-ancient-dna/mapping
+          <pre><code>cat > scripts/adna_01_mapping.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=adna_01_mapping
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/adna_01_mapping_%j.out
+#SBATCH --error=logs/adna_01_mapping_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/03-ancient-dna/mapping
+
+module load bowtie2 samtools
 
 bowtie2-build \
-    results/02-assembly/megahit/sample.contigs.fa \
+    results/02-assembly/megahit/mock_control.contigs.fa \
     results/03-ancient-dna/mapping/assembly_idx
 
 bowtie2 \
     -x results/03-ancient-dna/mapping/assembly_idx \
-    -1 results/01-qc/bbnorm/sample_R1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/sample_R2.norm.fastq.gz \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
     -p 8 | \
-samtools sort -o results/03-ancient-dna/mapping/sample.sorted.bam
-samtools index results/03-ancient-dna/mapping/sample.sorted.bam</code></pre></div>
+samtools sort -o results/03-ancient-dna/mapping/mock_control.sorted.bam
+samtools index results/03-ancient-dna/mapping/mock_control.sorted.bam
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/adna_01_mapping.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-2-pydamage">Step 2 — Quantify DNA Damage with PyDamage</h3>
+          <h3 id="step-2-pydamage">Step 2: Quantify DNA Damage with PyDamage</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/03-ancient-dna/pydamage
+          <pre><code>cat > scripts/adna_02_pydamage.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=adna_02_pydamage
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/adna_02_pydamage_%j.out
+#SBATCH --error=logs/adna_02_pydamage_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/03-ancient-dna/pydamage
+
+module load pydamage
 
 pydamage analyze \
-    results/03-ancient-dna/mapping/sample.sorted.bam \
+    results/03-ancient-dna/mapping/mock_control.sorted.bam \
     --outdir results/03-ancient-dna/pydamage \
     --process 8 \
     --min_cov 5
 
-# Filter for contigs with significant ancient damage
 pydamage filter \
-    results/03-ancient-dna/pydamage/pydamage_results.csv</code></pre></div>
+    results/03-ancient-dna/pydamage/pydamage_results.csv
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/adna_02_pydamage.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>Interpreting PyDamage output</strong>
             Key columns in <code>pydamage_results.csv</code>: <code>damage_model_p_value</code> (significant damage if &lt;0.05), <code>damage_model_freq</code> (C→T rate at 5' position 1), <code>predicted_accuracy</code>. A high <code>damage_model_freq</code> (&gt;10%) with low p-value indicates genuine ancient origin.
           </div>
 
-          <h3 id="step-3-freebayes">Step 3 — Variant Calling with FreeBayes</h3>
+          <h3 id="step-3-freebayes">Step 3: Variant Calling with FreeBayes</h3>
           <p>FreeBayes calls SNPs across damage-positive contigs to distinguish true variants from deamination artefacts:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/03-ancient-dna/freebayes
+          <pre><code>cat > scripts/adna_03_freebayes.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=adna_03_freebayes
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/adna_03_freebayes_%j.out
+#SBATCH --error=logs/adna_03_freebayes_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/03-ancient-dna/freebayes
+
+module load freebayes
 
 freebayes \
-    -f results/02-assembly/megahit/sample.contigs.fa \
-    results/03-ancient-dna/mapping/sample.sorted.bam \
+    -f results/02-assembly/megahit/mock_control.contigs.fa \
+    results/03-ancient-dna/mapping/mock_control.sorted.bam \
     --min-coverage 3 \
     --min-alternate-fraction 0.33 \
     --pooled-continuous \
-    > results/03-ancient-dna/freebayes/sample.vcf</code></pre></div>
+    > results/03-ancient-dna/freebayes/mock_control.vcf
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/adna_03_freebayes.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-4-bcftools">Step 4 — Consensus Correction with BCFtools</h3>
+          <h3 id="step-4-bcftools">Step 4: Consensus Correction with BCFtools</h3>
+          <p>These file operations complete in seconds; run them interactively once Step 3 finishes.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/03-ancient-dna/corrected
 
+module load bcftools
+
 # Compress and index VCF
-bgzip results/03-ancient-dna/freebayes/sample.vcf
-tabix -p vcf results/03-ancient-dna/freebayes/sample.vcf.gz
+bgzip results/03-ancient-dna/freebayes/mock_control.vcf
+tabix -p vcf results/03-ancient-dna/freebayes/mock_control.vcf.gz
 
 # Apply variants to generate corrected consensus
 bcftools consensus \
-    -f results/02-assembly/megahit/sample.contigs.fa \
-    results/03-ancient-dna/freebayes/sample.vcf.gz \
-    > results/03-ancient-dna/corrected/sample.corrected.fa</code></pre></div>
+    -f results/02-assembly/megahit/mock_control.contigs.fa \
+    results/03-ancient-dna/freebayes/mock_control.vcf.gz \
+    > results/03-ancient-dna/corrected/mock_control.corrected.fa</code></pre></div>
 
-          <h3 id="step-5-inspect-damage">Step 5 — Inspect Damage Patterns</h3>
+          <h3 id="step-5-inspect-damage">Step 5: Inspect Damage Patterns</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># View damage summary for top contigs
 head -20 results/03-ancient-dna/pydamage/pydamage_results.csv | \
@@ -154,16 +219,16 @@ awk -F',' 'NR>1 && $4 < 0.05 {count++} END {print count " contigs with significa
           <h2 id="expected-output">Expected Output</h2>
           <pre><code>results/03-ancient-dna/
 ├── mapping/
-│   ├── sample.sorted.bam
-│   └── sample.sorted.bam.bai
+│   ├── mock_control.sorted.bam
+│   └── mock_control.sorted.bam.bai
 ├── pydamage/
 │   ├── pydamage_results.csv
 │   └── pydamage_filter_results.csv
 ├── freebayes/
-│   ├── sample.vcf.gz
-│   └── sample.vcf.gz.tbi
+│   ├── mock_control.vcf.gz
+│   └── mock_control.vcf.gz.tbi
 └── corrected/
-    └── sample.corrected.fa</code></pre>
+    └── mock_control.corrected.fa</code></pre>
 
           <div style="display:flex; gap:1rem; margin-top:3rem;">
             <a href="module-02-assembly.html" class="btn btn-secondary">&larr; Module 2: Assembly</a>
@@ -180,11 +245,11 @@ awk -F',' 'NR>1 && $4 < 0.05 {count++} END {print count " contigs with significa
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
               <li><a href="#hands-on">Hands-on</a></li>
-              <li><a href="#step-1-map-reads">Step 1 — Map Reads</a></li>
-              <li><a href="#step-2-pydamage">Step 2 — PyDamage</a></li>
-              <li><a href="#step-3-freebayes">Step 3 — FreeBayes</a></li>
-              <li><a href="#step-4-bcftools">Step 4 — BCFtools</a></li>
-              <li><a href="#step-5-inspect-damage">Step 5 — Inspect Damage</a></li>
+              <li><a href="#step-1-map-reads">Step 1: Map Reads</a></li>
+              <li><a href="#step-2-pydamage">Step 2: PyDamage</a></li>
+              <li><a href="#step-3-freebayes">Step 3: FreeBayes</a></li>
+              <li><a href="#step-4-bcftools">Step 4: BCFtools</a></li>
+              <li><a href="#step-5-inspect-damage">Step 5: Inspect Damage</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>

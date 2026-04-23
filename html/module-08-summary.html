@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 8</div>
-    <span class="module-number">MODULE 8 &mdash; Day 4, Late Morning</span>
+    <span class="module-number">MODULE 8, Day 4, Late Morning</span>
     <h1>Run Summary</h1>
     <p>Aggregate QC and tool metrics across all samples with MultiQC, generate per-sample MAG recovery tables, and explore the complete MAG catalogue with BigMAG. Then run the full nf-core/mag pipeline end-to-end.</p>
   </div>
@@ -65,7 +65,7 @@
             </tbody>
           </table>
 
-          <h2 id="multiqc">Step 1 — Aggregate Reports with MultiQC</h2>
+          <h2 id="multiqc">Step 1: Aggregate Reports with MultiQC</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Navigate to your course working directory
 cd /ibex/user/$USER/metagenomics_course
@@ -83,10 +83,10 @@ multiqc \
 
           <div class="callout callout-note">
             <strong>MultiQC modules included</strong>
-            MultiQC automatically detects and includes: FastQC, fastp, Bowtie2 alignment stats, QUAST assembly metrics, Prokka annotation counts, and CheckM2/BUSCO completeness — giving a full picture of every sample in one place.
+            MultiQC automatically detects and includes: FastQC, fastp, Bowtie2 alignment stats, QUAST assembly metrics, Prokka annotation counts, and CheckM2/BUSCO completeness: giving a full picture of every sample in one place.
           </div>
 
-          <h2 id="bin-summary">Step 2 — Generate Bin Summary Table</h2>
+          <h2 id="bin-summary">Step 2: Generate Bin Summary Table</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/08-summary/bin_summary
 
@@ -113,7 +113,7 @@ echo "Total bins: $(tail -n +2 results/08-summary/bin_summary/final_summary.tsv 
 echo "High-quality: $(awk -F'\t' '$NF=="HQ"' results/08-summary/bin_summary/final_summary.tsv | wc -l)"
 echo "Medium-quality: $(awk -F'\t' '$NF=="MQ"' results/08-summary/bin_summary/final_summary.tsv | wc -l)"</code></pre></div>
 
-          <h2 id="bigmag">Step 3 — Visualise with BigMAG</h2>
+          <h2 id="bigmag">Step 3: Visualise with BigMAG</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/08-summary/bigmag
 
@@ -126,7 +126,7 @@ bigmag \
 # Open the interactive report
 open results/08-summary/bigmag/bigmag_report.html</code></pre></div>
 
-          <h2 id="nfcore-run">Step 4 — Full nf-core/mag Pipeline Run</h2>
+          <h2 id="nfcore-run">Step 4: Full nf-core/mag Pipeline Run</h2>
           <p>Run the complete automated pipeline from a samplesheet in one command:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Example samplesheet (CSV format)
@@ -189,7 +189,7 @@ mock_ss90,group1,raw_reads/mock_ss90_1.fastq.gz,raw_reads/mock_ss90_2.fastq.gz,<
             <tbody>
               <tr><td><code>--input</code></td><td>required</td><td>Path to samplesheet CSV</td></tr>
               <tr><td><code>--outdir</code></td><td>required</td><td>Output directory</td></tr>
-              <tr><td><code>-profile</code></td><td>—</td><td>Execution profile: <code>singularity</code>, <code>docker</code>, <code>conda</code></td></tr>
+              <tr><td><code>-profile</code></td><td>-</td><td>Execution profile: <code>singularity</code>, <code>docker</code>, <code>conda</code></td></tr>
               <tr><td><code>--ancient_dna</code></td><td>false</td><td>Enable PyDamage + FreeBayes + BCFtools ancient DNA workflow</td></tr>
               <tr><td><code>--coassemble_group</code></td><td>false</td><td>Co-assemble all samples in a group</td></tr>
               <tr><td><code>--binning_map_mode</code></td><td>group</td><td>Coverage mapping scope: <code>group</code>, <code>sample</code>, or <code>all</code></td></tr>
@@ -210,10 +210,10 @@ mock_ss90,group1,raw_reads/mock_ss90_1.fastq.gz,raw_reads/mock_ss90_2.fastq.gz,<
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
-              <li><a href="#multiqc">Step 1 — MultiQC</a></li>
-              <li><a href="#bin-summary">Step 2 — Bin Summary</a></li>
-              <li><a href="#bigmag">Step 3 — BigMAG</a></li>
-              <li><a href="#nfcore-run">Step 4 — nf-core/mag Run</a></li>
+              <li><a href="#multiqc">Step 1: MultiQC</a></li>
+              <li><a href="#bin-summary">Step 2: Bin Summary</a></li>
+              <li><a href="#bigmag">Step 3: BigMAG</a></li>
+              <li><a href="#nfcore-run">Step 4: nf-core/mag Run</a></li>
               <li><a href="#nfcore-output">nf-core/mag Output</a></li>
               <li><a href="#nf-core-parameters">Parameters Reference</a></li>
             </ul>
