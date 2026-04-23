@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="modules.html">Modules</a> &rsaquo; Module 7</div>
-    <span class="module-number">MODULE 7 &mdash; Day 4, Morning</span>
+    <span class="module-number">MODULE 7, Day 4, Morning</span>
     <h1>Taxonomy &amp; Annotation</h1>
     <p>Classify MAGs phylogenomically with GTDB-Tk, annotate contigs with CAT, and functionally annotate bins with Prokka (prokaryotes) and MetaEuk (eukaryotes).</p>
   </div>
@@ -52,7 +52,7 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p>Taxonomy in metagenomics can be assigned at multiple levels. GTDB-Tk places MAGs into the GTDB reference tree using average nucleotide identity and phylogenomics — this is the gold standard for prokaryotic MAG classification. CAT assigns taxonomy to individual contigs or bins by searching predicted proteins against a database and applying a last-common-ancestor algorithm. Prokka rapidly annotates prokaryotic bins with gene functions, rRNA, tRNA, and CRISPRs. MetaEuk handles eukaryotic gene prediction in bins, which is important for complex environments (e.g. soil, marine) where eukaryotic microorganisms are abundant.</p>
+          <p>Taxonomy in metagenomics can be assigned at multiple levels. GTDB-Tk places MAGs into the GTDB reference tree using average nucleotide identity and phylogenomics; this is the gold standard for prokaryotic MAG classification. CAT assigns taxonomy to individual contigs or bins by searching predicted proteins against a database and applying a last-common-ancestor algorithm. Prokka rapidly annotates prokaryotic bins with gene functions, rRNA, tRNA, and CRISPRs. MetaEuk handles eukaryotic gene prediction in bins, which is important for complex environments (e.g. soil, marine) where eukaryotic microorganisms are abundant.</p>
 
           <h2 id="tools">Tools</h2>
           <table>
@@ -67,21 +67,37 @@
 
           <h2 id="hands-on">Hands-on</h2>
 
-          <h3 id="step-1-gtdbtk">Step 1 — Phylogenomic Classification with GTDB-Tk</h3>
+          <h3 id="step-1-gtdbtk">Step 1: Phylogenomic Classification with GTDB-Tk</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Navigate to your course working directory
+          <pre><code>cat > scripts/tax_01_gtdbtk.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=tax_01_gtdbtk
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/tax_01_gtdbtk_%j.out
+#SBATCH --error=logs/tax_01_gtdbtk_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/07-taxonomy/gtdbtk
 
 module load gtdbtk
-
-mkdir -p results/07-taxonomy/gtdbtk
 
 gtdbtk classify_wf \
     --genome_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --out_dir results/07-taxonomy/gtdbtk \
     --extension fa \
-    --cpus 8 \
-    --mash_db /path/to/gtdbtk_db</code></pre></div>
+    --cpus 16 \
+    --mash_db /ibex/project/c2xxx/databases/gtdbtk_db
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/tax_01_gtdbtk.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>GTDB-Tk output</strong>
@@ -95,71 +111,134 @@ gtdbtk classify_wf \
             This is a rare opportunity in metagenomics to evaluate your full pipeline against a gold standard.
           </div>
 
-          <h3 id="step-2-cat">Step 2 — Contig &amp; Bin Taxonomy with CAT</h3>
+          <h3 id="step-2-cat">Step 2: Contig &amp; Bin Taxonomy with CAT</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/07-taxonomy/cat
+          <pre><code>cat > scripts/tax_02_cat.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=tax_02_cat
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/tax_02_cat_%j.out
+#SBATCH --error=logs/tax_02_cat_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
 
-# Run CAT in bin mode
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/07-taxonomy/cat
+
+module load cat
+
 CAT bins \
     -b results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     -s .fa \
-    -d /path/to/cat_db/db \
-    -t /path/to/cat_db/taxonomy \
+    -d /ibex/project/c2xxx/databases/cat_db/db \
+    -t /ibex/project/c2xxx/databases/cat_db/taxonomy \
     -o results/07-taxonomy/cat/mock_control \
     --threads 8 \
     --index_chunks 1
 
-# Add taxonomic lineage names
 CAT add_names \
     results/07-taxonomy/cat/mock_control.bin2classification.txt \
     -o results/07-taxonomy/cat/mock_control.named.txt \
-    -t /path/to/cat_db/taxonomy \
-    --only_official</code></pre></div>
+    -t /ibex/project/c2xxx/databases/cat_db/taxonomy \
+    --only_official
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/tax_02_cat.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
-          <h3 id="step-3-prokka">Step 3 — Prokaryotic Annotation with Prokka</h3>
+          <h3 id="step-3-prokka">Step 3: Prokaryotic Annotation with Prokka</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/07-taxonomy/prokka
+          <pre><code>cat > scripts/tax_03_prokka.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=tax_03_prokka
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/tax_03_prokka_%j.out
+#SBATCH --error=logs/tax_03_prokka_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/07-taxonomy/prokka
+
+module load prokka
 
 for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
-    name=$(basename ${bin%.fa})
+    name=$(basename "${bin%.fa}")
     prokka \
-        $bin \
-        --outdir results/07-taxonomy/prokka/$name \
-        --prefix $name \
+        "$bin" \
+        --outdir "results/07-taxonomy/prokka/$name" \
+        --prefix "$name" \
         --metagenome \
         --kingdom Bacteria \
         --cpus 8 \
         --force
 done
-
-# Summary: count CDS per bin
-for f in results/07-taxonomy/prokka/*/; do
-    txt=$(ls $f/*.txt 2>/dev/null | head -1)
-    [ -f "$txt" ] && echo -e "$(basename $f)\t$(grep 'CDS:' $txt)"
-done</code></pre></div>
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/tax_03_prokka.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-note">
             <strong>Prokka output files</strong>
-            <code>.gff</code> — gene coordinates (GFF3); <code>.faa</code> — protein sequences; <code>.tsv</code> — annotation table; <code>.txt</code> — summary statistics (# CDS, rRNA, tRNA).
+            <code>.gff</code>: gene coordinates (GFF3); <code>.faa</code>: protein sequences; <code>.tsv</code>: annotation table; <code>.txt</code>: summary statistics (# CDS, rRNA, tRNA).
           </div>
 
-          <h3 id="step-4-metaeuk">Step 4 — Eukaryotic Gene Prediction with MetaEuk</h3>
+          <p>Once Prokka finishes, count annotated CDS per bin interactively:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>mkdir -p results/07-taxonomy/metaeuk
+          <pre><code>for f in results/07-taxonomy/prokka/*/; do
+    txt=$(ls "$f"/*.txt 2>/dev/null | head -1)
+    [ -f "$txt" ] && echo -e "$(basename $f)\t$(grep 'CDS:' $txt)"
+done</code></pre></div>
+
+          <h3 id="step-4-metaeuk">Step 4: Eukaryotic Gene Prediction with MetaEuk</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/tax_04_metaeuk.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=tax_04_metaeuk
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/tax_04_metaeuk_%j.out
+#SBATCH --error=logs/tax_04_metaeuk_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=<YOUR_EMAIL>
+
+# Exit immediately on error (-e), treat unset variables as errors (-u),
+# and propagate pipe failures (-o pipefail) so the job stops at the first
+# sign of trouble rather than silently continuing with bad data.
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/07-taxonomy/metaeuk
+
+module load metaeuk
 
 metaeuk easy-predict \
     results/05-refinement/das_tool/mock_control_DASTool_bins/bin.euk.fa \
-    /path/to/metaeuk_db/metaeuk_db \
+    /ibex/project/c2xxx/databases/metaeuk_db/metaeuk_db \
     results/07-taxonomy/metaeuk/bin_euk \
     results/07-taxonomy/metaeuk/tmp \
-    --threads 8</code></pre></div>
+    --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/tax_04_metaeuk.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <div class="callout callout-warning">
             <strong>When to use MetaEuk</strong>
             MetaEuk is appropriate for bins that Tiara (Module 4) classified as <code>eukarya</code>. Running it on prokaryotic bins is wasteful. In nf-core/mag, MetaEuk is enabled with <code>--skip_metaeuk false</code> and requires a MetaEuk-compatible MMseqs2 database (<code>--metaeuk_mmseqs_db</code>).
           </div>
 
-          <h3 id="step-5-gtdb-vs-ncbi">Step 5 — GTDB vs NCBI Taxonomy</h3>
+          <h3 id="step-5-gtdb-vs-ncbi">Step 5: Compare GTDB vs CAT Taxonomy</h3>
+          <p>Both outputs are available once their jobs complete: inspect them interactively:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Show GTDB classifications for bacteria
 column -t -s$'\t' \
@@ -175,14 +254,14 @@ column -t -s$'\t' \
             <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
             <tbody>
               <tr><td><code>--skip_gtdbtk</code></td><td>false</td><td>Skip GTDB-Tk classification</td></tr>
-              <tr><td><code>--gtdbtk_db</code></td><td>—</td><td>Path to GTDB-Tk reference data</td></tr>
+              <tr><td><code>--gtdbtk_db</code></td><td>-</td><td>Path to GTDB-Tk reference data</td></tr>
               <tr><td><code>--gtdbtk_pplacer_cpus</code></td><td>1</td><td>CPUs for pplacer placement step</td></tr>
               <tr><td><code>--skip_cat</code></td><td>false</td><td>Skip CAT annotation</td></tr>
-              <tr><td><code>--cat_db</code></td><td>—</td><td>Path to CAT database</td></tr>
+              <tr><td><code>--cat_db</code></td><td>-</td><td>Path to CAT database</td></tr>
               <tr><td><code>--skip_prokka</code></td><td>false</td><td>Skip Prokka bin annotation</td></tr>
               <tr><td><code>--prokka_fast_mode</code></td><td>false</td><td>Skip product database search (faster)</td></tr>
               <tr><td><code>--skip_metaeuk</code></td><td>false</td><td>Skip MetaEuk eukaryotic prediction</td></tr>
-              <tr><td><code>--metaeuk_mmseqs_db</code></td><td>—</td><td>MMseqs2 database for MetaEuk</td></tr>
+              <tr><td><code>--metaeuk_mmseqs_db</code></td><td>-</td><td>MMseqs2 database for MetaEuk</td></tr>
             </tbody>
           </table>
 
@@ -217,11 +296,11 @@ column -t -s$'\t' \
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
               <li><a href="#hands-on">Hands-on</a></li>
-              <li><a href="#step-1-gtdbtk">Step 1 — GTDB-Tk</a></li>
-              <li><a href="#step-2-cat">Step 2 — CAT</a></li>
-              <li><a href="#step-3-prokka">Step 3 — Prokka</a></li>
-              <li><a href="#step-4-metaeuk">Step 4 — MetaEuk</a></li>
-              <li><a href="#step-5-gtdb-vs-ncbi">Step 5 — GTDB vs NCBI</a></li>
+              <li><a href="#step-1-gtdbtk">Step 1: GTDB-Tk</a></li>
+              <li><a href="#step-2-cat">Step 2: CAT</a></li>
+              <li><a href="#step-3-prokka">Step 3: Prokka</a></li>
+              <li><a href="#step-4-metaeuk">Step 4: MetaEuk</a></li>
+              <li><a href="#step-5-gtdb-vs-ncbi">Step 5: GTDB vs CAT</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>

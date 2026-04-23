@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="schedule.html">Schedule</a> &rsaquo; Day 1</div>
-    <span class="module-number">DAY 1 &mdash; 10:15 &ndash; 10:45</span>
+    <span class="module-number">DAY 1, 10:15 &ndash; 10:45</span>
     <h1>Nextflow &amp; nf-core/mag Overview</h1>
     <p>Understand how Nextflow works, explore the nf-core/mag parameter space, build a samplesheet, and submit the pipeline job that will run in the background while you work through the manual modules.</p>
   </div>
@@ -53,9 +53,9 @@
           </ul>
 
           <h2 id="background">Background</h2>
-          <p><strong>Nextflow</strong> is a workflow manager that chains bioinformatics tools into reproducible, scalable pipelines. It handles parallelisation, error recovery, and execution on HPC clusters automatically. <strong>nf-core</strong> is a community effort that provides curated, best-practice Nextflow pipelines — including <strong>nf-core/mag</strong>, which automates every step you will run manually in Modules 1–8. Running the pipeline in parallel with the manual sessions lets you compare automated and manual outputs at the end of the course (Day 4).</p>
+          <p><strong>Nextflow</strong> is a workflow manager that chains bioinformatics tools into reproducible, scalable pipelines. It handles parallelisation, error recovery, and execution on HPC clusters automatically. <strong>nf-core</strong> is a community effort that provides curated, best-practice Nextflow pipelines, including <strong>nf-core/mag</strong>, which automates every step you will run manually in Modules 1–8. Running the pipeline in parallel with the manual sessions lets you compare automated and manual outputs at the end of the course (Day 4).</p>
 
-          <h2 id="step-1-load">Step 1 — Load Nextflow on Ibex</h2>
+          <h2 id="step-1-load">Step 1: Load Nextflow on Ibex</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Load the Nextflow module
 module load nextflow/23.10.0
@@ -70,15 +70,15 @@ nextflow -version</code></pre></div>
 
           <div class="callout callout-note">
             <strong>Singularity on Ibex</strong>
-            nf-core/mag uses Singularity containers to run every tool — no conda environments needed when running through the pipeline. Singularity is pre-installed on all Ibex compute nodes. We use <code>-profile singularity</code> in all pipeline commands.
+            nf-core/mag uses Singularity containers to run every tool: no conda environments needed when running through the pipeline. Singularity is pre-installed on all Ibex compute nodes. We use <code>-profile singularity</code> in all pipeline commands.
           </div>
 
-          <h2 id="step-2-explore">Step 2 — Explore nf-core/mag Parameters</h2>
+          <h2 id="step-2-explore">Step 2: Explore nf-core/mag Parameters</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Show the full parameter list for nf-core/mag v5.4.2
 nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
 
-          <p>Key parameter groups to note — these map directly to the modules you will run manually:</p>
+          <p>Key parameter groups to note: these map directly to the modules you will run manually:</p>
           <table>
             <thead><tr><th>Group</th><th>Key parameters</th><th>Module</th></tr></thead>
             <tbody>
@@ -94,7 +94,7 @@ nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
             </tbody>
           </table>
 
-          <h2 id="step-3-samplesheet">Step 3 — Build the Samplesheet</h2>
+          <h2 id="step-3-samplesheet">Step 3: Build the Samplesheet</h2>
           <p>nf-core/mag takes a CSV samplesheet as input. Each row is one sample:</p>
 
           <table>
@@ -104,7 +104,7 @@ nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
               <tr><td><code>group</code></td><td>Yes</td><td>Samples sharing a group are co-assembled and use each other for binning coverage</td></tr>
               <tr><td><code>short_reads_1</code></td><td>Yes</td><td>Path to forward FASTQ (can be gzipped)</td></tr>
               <tr><td><code>short_reads_2</code></td><td>Yes</td><td>Path to reverse FASTQ</td></tr>
-              <tr><td><code>long_reads</code></td><td>No</td><td>Path to long-read FASTQ — leave empty for short-read-only samples</td></tr>
+              <tr><td><code>long_reads</code></td><td>No</td><td>Path to long-read FASTQ: leave empty for short-read-only samples</td></tr>
             </tbody>
           </table>
 
@@ -115,7 +115,7 @@ nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
 cat > samplesheet.csv << 'EOF'
 sample,group,short_reads_1,short_reads_2,long_reads
 sample1,group1,data/reads/sample1_R1.fastq.gz,data/reads/sample1_R2.fastq.gz,
-sample2,group1,data/reads/sample2_R1.fastq.gz,data/reads/sample2_R2.fastq.gz,data/reads/sample2_long.fastq.gz
+sample2,group1,data/reads/sample2_R1.fastq.gz,data/reads/sample2_R2.fastq.gz,raw_reads/zymo_long.fastq.gz
 EOF
 
 # Verify it looks correct
@@ -126,8 +126,8 @@ cat samplesheet.csv</code></pre></div>
             Samples in the same <code>group</code> are co-assembled by default when <code>--coassemble_group true</code> is set. For independent assemblies, give each sample a unique group name. Coverage from all group members is used to improve binning regardless of assembly mode.
           </div>
 
-          <h2 id="step-4-dryrun">Step 4 — Validate with a Dry Run</h2>
-          <p>The <code>-stub</code> flag runs all pipeline logic without executing any tools. It creates empty output files and checks that your samplesheet and parameters are valid — run this before committing to a real job.</p>
+          <h2 id="step-4-dryrun">Step 4: Validate with a Dry Run</h2>
+          <p>The <code>-stub</code> flag runs all pipeline logic without executing any tools. It creates empty output files and checks that your samplesheet and parameters are valid; run this before committing to a real job.</p>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>nextflow run nf-core/mag \
@@ -147,8 +147,8 @@ cat samplesheet.csv</code></pre></div>
 
           <p>A successful dry run prints a process execution tree and exits cleanly with no errors.</p>
 
-          <h2 id="step-5-submit">Step 5 — Submit the Pipeline Job</h2>
-          <p>Once the dry run passes, submit the real job as a SLURM batch script. This will run in the background while you work through the manual modules — results will be ready to compare on Day 4.</p>
+          <h2 id="step-5-submit">Step 5: Submit the Pipeline Job</h2>
+          <p>Once the dry run passes, submit the real job as a SLURM batch script. This will run in the background while you work through the manual modules: results will be ready to compare on Day 4.</p>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>cat > run_nfcore_mag.sh << 'EOF'
@@ -226,11 +226,11 @@ squeue -u $USER</code></pre></div>
             <ul>
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#background">Background</a></li>
-              <li><a href="#step-1-load">Step 1 — Load Nextflow</a></li>
-              <li><a href="#step-2-explore">Step 2 — Explore Parameters</a></li>
-              <li><a href="#step-3-samplesheet">Step 3 — Samplesheet</a></li>
-              <li><a href="#step-4-dryrun">Step 4 — Dry Run</a></li>
-              <li><a href="#step-5-submit">Step 5 — Submit Job</a></li>
+              <li><a href="#step-1-load">Step 1: Load Nextflow</a></li>
+              <li><a href="#step-2-explore">Step 2: Explore Parameters</a></li>
+              <li><a href="#step-3-samplesheet">Step 3: Samplesheet</a></li>
+              <li><a href="#step-4-dryrun">Step 4: Dry Run</a></li>
+              <li><a href="#step-5-submit">Step 5: Submit Job</a></li>
               <li><a href="#output-structure">Output Structure</a></li>
             </ul>
           </div>

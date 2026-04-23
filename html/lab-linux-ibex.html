@@ -30,7 +30,7 @@
 <div class="module-header">
   <div class="container">
     <div class="breadcrumb"><a href="schedule.html">Schedule</a> &rsaquo; Day 1</div>
-    <span class="module-number">DAY 1 &mdash; 09:15 &ndash; 10:15</span>
+    <span class="module-number">DAY 1, 09:15 &ndash; 10:15</span>
     <h1>Linux Command Line &amp; Ibex Cluster</h1>
     <p>Get connected to the Ibex HPC cluster, explore the course data, and learn the essential Linux commands and SLURM job submission patterns you will use throughout the week.</p>
   </div>
@@ -54,13 +54,13 @@
             <li>Use <code>screen</code> to keep sessions alive during long runs</li>
           </ul>
 
-          <h2 id="step-1-connect">Step 1 — Connect to Ibex</h2>
+          <h2 id="step-1-connect">Step 1: Connect to Ibex</h2>
           <p>Ibex has three login nodes for different purposes. For this course use <strong>ilogin</strong> (CPU jobs):</p>
 
           <table>
             <thead><tr><th>Hostname</th><th>Use for</th></tr></thead>
             <tbody>
-              <tr><td><code>ilogin.ibex.kaust.edu.sa</code></td><td>CPU job submission — use this throughout the course</td></tr>
+              <tr><td><code>ilogin.ibex.kaust.edu.sa</code></td><td>CPU job submission: use this throughout the course</td></tr>
               <tr><td><code>glogin.ibex.kaust.edu.sa</code></td><td>GPU job submission</td></tr>
               <tr><td><code>vscode.ibex.kaust.edu.sa</code></td><td>IDE / VS Code Remote SSH access</td></tr>
             </tbody>
@@ -76,7 +76,7 @@
 
           <div class="callout callout-warning">
             <strong>Login nodes are not for computation</strong>
-            Login nodes are shared resources — do not run tools, scripts, or any computationally intensive commands directly on them. Use <code>srun</code> (interactive) or <code>sbatch</code> (batch) for all course steps.
+            Login nodes are shared resources: do not run tools, scripts, or any computationally intensive commands directly on them. Use <code>srun</code> (interactive) or <code>sbatch</code> (batch) for all course steps.
           </div>
 
           <p>Verify you are connected and check your identity:</p>
@@ -85,8 +85,8 @@
 whoami          # your username
 echo $HOME      # your home directory</code></pre></div>
 
-          <h2 id="step-2-filesystem">Step 2 — Ibex Filesystem Layout</h2>
-          <p>Ibex has four storage locations. Use the right one — performance and retention policies differ significantly:</p>
+          <h2 id="step-2-filesystem">Step 2: Ibex Filesystem Layout</h2>
+          <p>Ibex has four storage locations. Use the right one: performance and retention policies differ significantly:</p>
 
           <table>
             <thead><tr><th>Path</th><th>Quota</th><th>Backed up?</th><th>Use for</th></tr></thead>
@@ -109,8 +109,8 @@ df -h /ibex/user/$USER
 COURSE_DIR=/ibex/project/c2xxx/metagenomics_course
 ls $COURSE_DIR</code></pre></div>
 
-          <h2 id="step-3-workdir">Step 3 — Set Up Your Working Directory</h2>
-          <p>Use <code>/ibex/user/$USER</code> for all course work — it has 1.5 TB, high-performance WekaIO storage, and persists for the lifetime of your account.</p>
+          <h2 id="step-3-workdir">Step 3: Set Up Your Working Directory</h2>
+          <p>Use <code>/ibex/user/$USER</code> for all course work: it has 1.5 TB, high-performance WekaIO storage, and persists for the lifetime of your account.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Create your personal working directory
 mkdir -p /ibex/user/$USER/metagenomics_course
@@ -127,8 +127,8 @@ source ~/.bashrc
 echo $WORKDIR
 ls $WORKDIR/data</code></pre></div>
 
-          <h2 id="step-4-commands">Step 4 — Essential Commands for This Course</h2>
-          <p>Practice these commands on the course FASTQ files — you will use them in every module.</p>
+          <h2 id="step-4-commands">Step 4: Essential Commands for This Course</h2>
+          <p>Practice these commands on the course FASTQ files: you will use them in every module.</p>
 
           <h3 id="viewing-files">Viewing and inspecting files</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -168,7 +168,7 @@ cd results/01-qc
 pwd
 cd $WORKDIR         # back to working directory</code></pre></div>
 
-          <h2 id="step-5-conda">Step 5 — Conda Environments</h2>
+          <h2 id="step-5-conda">Step 5: Conda Environments</h2>
           <p>Each module uses a dedicated conda environment. Activate the correct one before running any tools.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># List all available environments
@@ -187,15 +187,15 @@ conda deactivate</code></pre></div>
 
           <div class="callout callout-note">
             <strong>Environment names used in this course</strong>
-            <code>metagenomics-qc</code> — FastQC, fastp, Bowtie2, BBNorm, NanoPlot, Chopper<br>
-            <code>metagenomics-assembly</code> — MEGAHIT, SPAdes, Flye, QUAST, Prodigal, geNomad<br>
-            <code>metagenomics-binning</code> — MetaBAT2, MaxBin2, CONCOCT, COMEBin, SemiBin2, Tiara, DAS Tool<br>
-            <code>metagenomics-binqc</code> — CheckM2, BUSCO, GUNC<br>
-            <code>metagenomics-taxonomy</code> — GTDB-Tk, CAT, Prokka, MetaEuk
+            <code>metagenomics-qc</code>: FastQC, fastp, Bowtie2, BBNorm, NanoPlot, Chopper<br>
+            <code>metagenomics-assembly</code>: MEGAHIT, SPAdes, Flye, QUAST, Prodigal, geNomad<br>
+            <code>metagenomics-binning</code>: MetaBAT2, MaxBin2, CONCOCT, COMEBin, SemiBin2, Tiara, DAS Tool<br>
+            <code>metagenomics-binqc</code>: CheckM2, BUSCO, GUNC<br>
+            <code>metagenomics-taxonomy</code>: GTDB-Tk, CAT, Prokka, MetaEuk
           </div>
 
-          <h2 id="step-6-slurm">Step 6 — SLURM Job Submission</h2>
-          <p>All computational work must run on compute nodes via SLURM — never directly on the login node. Submit CPU jobs from <code>ilogin</code>. The default partition is <code>batch</code>.</p>
+          <h2 id="step-6-slurm">Step 6: SLURM Job Submission</h2>
+          <p>All computational work must run on compute nodes via SLURM, never directly on the login node. Submit CPU jobs from <code>ilogin</code>. The default partition is <code>batch</code>.</p>
 
           <h3 id="interactive">Interactive session</h3>
           <p>Use <code>srun</code> for interactive hands-on steps. This gives you a shell on a compute node:</p>
@@ -262,11 +262,11 @@ sinfo</code></pre></div>
 
           <div class="callout callout-warning">
             <strong>Fair-share scheduling</strong>
-            Ibex uses a fair-share allocation system. Heavy recent usage lowers your scheduling priority. For the course, keep job requests reasonable — use only the CPUs and memory you actually need.
+            Ibex uses a fair-share allocation system. Heavy recent usage lowers your scheduling priority. For the course, keep job requests reasonable: use only the CPUs and memory you actually need.
           </div>
 
           <h2 id="step-6b-refdata">Reference Databases on Ibex</h2>
-          <p>Many bioinformatics databases (GTDB-Tk, CheckM2, BLAST, and others) are pre-installed on Ibex and available to all users — you do not need to download them yourself. Access requires a one-time request that is approved automatically.</p>
+          <p>Many bioinformatics databases (GTDB-Tk, CheckM2, BLAST, and others) are pre-installed on Ibex and available to all users: you do not need to download them yourself. Access requires a one-time request that is approved automatically.</p>
           <ol>
             <li>Go to <a href="https://my.ibex.kaust.edu.sa/v2/references" target="_blank" rel="noopener">my.ibex.kaust.edu.sa/v2/references</a></li>
             <li>Search for the database you need and click <strong>Request Access</strong></li>
@@ -274,21 +274,21 @@ sinfo</code></pre></div>
           </ol>
           <div class="callout callout-note">
             <strong>Course databases</strong>
-            The instructors have pre-staged all databases needed for this course under <code>/ibex/project/c2xxx/metagenomics_course/databases/</code>. You do not need to request Ibex reference data access separately — just use the course paths provided.
+            The instructors have pre-staged all databases needed for this course under <code>/ibex/project/c2xxx/metagenomics_course/databases/</code>. You do not need to request Ibex reference data access separately: just use the course paths provided.
           </div>
 
-          <h2 id="step-7-ncbi">Step 7 — Downloading Public Data from NCBI</h2>
+          <h2 id="step-7-ncbi">Step 7: Downloading Public Data from NCBI</h2>
           <p>Two complementary tools cover the most common data-download scenarios: <strong>SRA Toolkit</strong> for raw sequencing reads (FASTQ) and <strong>NCBI Datasets CLI</strong> for reference genomes and assemblies.</p>
 
-          <h3 id="sra-toolkit">Part A — SRA Toolkit (reads)</h3>
+          <h3 id="sra-toolkit">Part A: SRA Toolkit (reads)</h3>
           <p>The <a href="https://www.ncbi.nlm.nih.gov/sra" target="_blank" rel="noopener">NCBI Sequence Read Archive (SRA)</a> is the world's largest repository of high-throughput sequencing data. Each experiment is identified by a <strong>run accession</strong> starting with <code>SRR</code>. SRA Toolkit provides two key commands:</p>
 
           <table>
             <thead><tr><th>Command</th><th>What it does</th></tr></thead>
             <tbody>
-              <tr><td><code>prefetch</code></td><td>Downloads the compressed SRA container file to local cache. Resumable if interrupted — always use this step first for large files.</td></tr>
+              <tr><td><code>prefetch</code></td><td>Downloads the compressed SRA container file to local cache. Resumable if interrupted: always use this step first for large files.</td></tr>
               <tr><td><code>fasterq-dump</code></td><td>Converts the SRA container to FASTQ. <code>--split-files</code> writes R1/R2 as separate files; <code>-p</code> shows a progress bar; <code>-e</code> sets thread count.</td></tr>
-              <tr><td><code>vdb-dump --info</code></td><td>Inspects an SRA file or accession before converting — shows read count, read length, library layout.</td></tr>
+              <tr><td><code>vdb-dump --info</code></td><td>Inspects an SRA file or accession before converting: shows read count, read length, library layout.</td></tr>
             </tbody>
           </table>
 
@@ -309,7 +309,7 @@ vdb-dump --info SRR9291172</code></pre></div>
             If <code>module load TOOL_XYZ</code> fails, search in the available app stack using <code>module avail KEYWORD</code> e.g. <code>module avail sra</code> to find the correct name of the app.
           </div>
 
-          <p>Download and convert the course dataset (PRJNA521492 — Pereira-Marques et al. 2019):</p>
+          <p>Download and convert the course dataset (PRJNA521492: Pereira-Marques et al. 2019):</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>cd /ibex/user/$USER/metagenomics_course
 mkdir -p raw_reads
@@ -352,8 +352,8 @@ tree -h ./
 
           <div class="callout callout-note">
             <strong>Expected files after download</strong>
-            <code>mock_control_1.fastq.gz</code>, <code>mock_control_2.fastq.gz</code> — 0 % host (mock community only)<br>
-            <code>mock_ss90_1.fastq.gz</code>, <code>mock_ss90_2.fastq.gz</code> — 90 % C57BL/6 mouse host DNA
+            <code>mock_control_1.fastq.gz</code>, <code>mock_control_2.fastq.gz</code>: 0 % host (mock community only)<br>
+            <code>mock_ss90_1.fastq.gz</code>, <code>mock_ss90_2.fastq.gz</code>: 90 % C57BL/6 mouse host DNA
           </div>
 
           <div class="callout callout-tip">
@@ -361,7 +361,7 @@ tree -h ./
             The raw data for this course are already pre-staged at <code>/biocorelab/BIX/resources/training/XXX</code>. You only need the steps above if you want to practise the download workflow or need data not included in the course data.
           </div>
 
-          <h3 id="ncbi-datasets">Part B — NCBI Datasets CLI (reference genomes)</h3>
+          <h3 id="ncbi-datasets">Part B: NCBI Datasets CLI (reference genomes)</h3>
           <p><a href="https://www.ncbi.nlm.nih.gov/datasets" target="_blank" rel="noopener">NCBI Datasets</a> is the modern replacement for Entrez Direct for downloading genomes and assemblies. Accessions starting with <code>GCA_</code> (GenBank) or <code>GCF_</code> (RefSeq) identify genome assemblies.</p>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -399,8 +399,8 @@ rm -rf ncbi_dataset GRCm39.zip</code></pre></div>
             The GRCm39 reference genome is already pre-staged at <code>/biocorelab/BIX/resources/genomes/Ensembl-release-113/GRCm39/GRCm39.fa</code>. You only need the steps above if you want to practise the download workflow or need a genome not included in the course data.
           </div>
 
-          <h3 id="entrez">Part C — Entrez Direct (metadata and accession lists)</h3>
-          <p>Entrez Direct (<code>esearch</code> / <code>efetch</code>) is useful for querying NCBI databases programmatically — especially for fetching run metadata or generating accession lists for a BioProject before downloading with SRA Toolkit.</p>
+          <h3 id="entrez">Part C: Entrez Direct (metadata and accession lists)</h3>
+          <p>Entrez Direct (<code>esearch</code> / <code>efetch</code>) is useful for querying NCBI databases programmatically: especially for fetching run metadata or generating accession lists for a BioProject before downloading with SRA Toolkit.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>module load entrez-direct
 
@@ -411,13 +411,13 @@ esearch -db sra -query PRJNA521492 | efetch -format runinfo > PRJNA521492_runinf
 head -2 PRJNA521492_runinfo.csv | cut -d',' -f1-6</code></pre></div>
 
           <div class="callout callout-warning">
-            <strong>Known issue on Ibex — SSL error</strong>
+            <strong>Known issue on Ibex: SSL error</strong>
             On some Ibex nodes <code>esearch</code> fails with <code>OpenSSL error:0A00006E: bad extension</code>. This is a TLS compatibility issue between the cluster's OpenSSL build and NCBI's servers. If you hit this, use the <strong>SRA Run Selector</strong> web interface instead: go to <a href="https://www.ncbi.nlm.nih.gov/Traces/study/" target="_blank" rel="noopener">ncbi.nlm.nih.gov/Traces/study/</a>, search for your BioProject accession, select the runs you want, and click <strong>Accession List</strong> to download a plain-text <code>SRR_Acc_List.txt</code> file. You can then feed it directly to <code>prefetch --option-file SRR_Acc_List.txt</code>.
           </div>
 
           <p>For bulk downloads of the actual reads, extract the <code>Run</code> column and pass accessions to <code>prefetch</code>; for metadata and genome downloads, prefer <strong>NCBI Datasets</strong> as shown in Part B above.</p>
 
-          <h2 id="step-8-screen">Step 8 — Keep Sessions Alive with Screen</h2>
+          <h2 id="step-8-screen">Step 8: Keep Sessions Alive with Screen</h2>
           <p>If your SSH connection drops, an interactive <code>srun</code> session is lost. Use <code>screen</code> to protect long sessions.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Start a named screen session on the login node
@@ -433,7 +433,7 @@ screen -ls
 screen -r metagenomics</code></pre></div>
 
           <div class="callout callout-tip">
-            <strong>Tip — screen inside srun</strong>
+            <strong>Tip: screen inside srun</strong>
             Start <code>screen</code> on the login node first, then run <code>srun</code> inside it. This way, if your laptop disconnects, the interactive compute session keeps running and you can re-attach from any login node.
           </div>
 
@@ -449,16 +449,16 @@ screen -r metagenomics</code></pre></div>
             <h4>On This Page</h4>
             <ul>
               <li><a href="#learning-objectives">Learning Objectives</a></li>
-              <li><a href="#step-1-connect">Step 1 — Connect to Ibex</a></li>
-              <li><a href="#step-2-filesystem">Step 2 — Filesystem Layout</a></li>
-              <li><a href="#step-3-workdir">Step 3 — Working Directory</a></li>
-              <li><a href="#step-4-commands">Step 4 — Essential Commands</a></li>
-              <li><a href="#step-5-conda">Step 5 — Conda Environments</a></li>
-              <li><a href="#step-6-slurm">Step 6 — SLURM</a></li>
+              <li><a href="#step-1-connect">Step 1: Connect to Ibex</a></li>
+              <li><a href="#step-2-filesystem">Step 2: Filesystem Layout</a></li>
+              <li><a href="#step-3-workdir">Step 3: Working Directory</a></li>
+              <li><a href="#step-4-commands">Step 4: Essential Commands</a></li>
+              <li><a href="#step-5-conda">Step 5: Conda Environments</a></li>
+              <li><a href="#step-6-slurm">Step 6: SLURM</a></li>
               <li><a href="#policy-limits">Policy limits</a></li>
               <li><a href="#step-6b-refdata">Reference Databases</a></li>
-              <li><a href="#step-7-ncbi">Step 7 — Downloading from NCBI</a></li>
-              <li><a href="#step-8-screen">Step 8 — Screen</a></li>
+              <li><a href="#step-7-ncbi">Step 7: Downloading from NCBI</a></li>
+              <li><a href="#step-8-screen">Step 8: Screen</a></li>
             </ul>
           </div>
           <div class="sidebar-card" style="margin-top:1rem;">
