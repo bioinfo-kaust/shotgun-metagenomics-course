@@ -106,54 +106,48 @@ quota -s
 df -h /ibex/user/$USER
 
 # Course data (pre-staged, read-only)
-COURSE_DIR=/ibex/project/c2xxx/metagenomics_course
+COURSE_DIR=/biocorelab/BIX/resources/training/2026/metagenomics
 ls $COURSE_DIR</code></pre></div>
 
           <h2 id="step-3-workdir">Step 3: Set Up Your Working Directory</h2>
           <p>Use <code>/ibex/user/$USER</code> for all course work: it has 1.5 TB, high-performance WekaIO storage, and persists for the lifetime of your account.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Create your personal working directory
-mkdir -p /ibex/user/$USER/metagenomics_course
+          <pre><code># Create course working directory with all subdirectories
+mkdir -p /ibex/user/$USER/metagenomics_course/{scripts,logs,raw_reads,results,references}
 cd /ibex/user/$USER/metagenomics_course
 
-# Create a symlink to the course data
-ln -s $COURSE_DIR data
-
-# Add a WORKDIR variable to your shell profile
-echo 'export WORKDIR=/ibex/user/$USER/metagenomics_course' >> ~/.bashrc
-source ~/.bashrc
-
-# Verify
-echo $WORKDIR
-ls $WORKDIR/data</code></pre></div>
+# Confirm available space
+df -h /ibex/user/$USER</code></pre></div>
 
           <h2 id="step-4-commands">Step 4: Essential Commands for This Course</h2>
           <p>Practice these commands on the course FASTQ files: you will use them in every module.</p>
 
           <h3 id="viewing-files">Viewing and inspecting files</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Peek at a gzip-compressed FASTQ (4 lines = 1 read)
-zcat data/reads/sample1_R1.fastq.gz | head -8
+          <pre><code>cd /ibex/user/$USER/metagenomics_course
 
-# Count the number of reads  (lines ÷ 4)
-zcat data/reads/sample1_R1.fastq.gz | wc -l
+# Peek at a gzip-compressed FASTQ (4 lines = 1 read)
+zcat raw_reads/mock_control_1.fastq.gz | head -8
 
-# Scroll through a file interactively  (q to quit)
-zcat data/reads/sample1_R1.fastq.gz | less
+# Count the number of reads (lines ÷ 4)
+zcat raw_reads/mock_control_1.fastq.gz | wc -l
+
+# Scroll through a file interactively (q to quit)
+zcat raw_reads/mock_control_1.fastq.gz | less
 
 # Show file sizes
-ls -lh data/reads/</code></pre></div>
+ls -lh raw_reads/</code></pre></div>
 
           <h3 id="searching">Searching and filtering</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Count read headers (lines starting with @)
-zcat data/reads/sample1_R1.fastq.gz | grep -c "^@"
+zcat raw_reads/mock_control_1.fastq.gz | grep -c "^@"
 
-# Show only the first column of a TSV file
-cut -f1 data/metadata/samples.tsv | head -10
+# Show read quality scores (line 4 of every 4-line block)
+zcat raw_reads/mock_control_1.fastq.gz | awk 'NR%4==0' | head -5
 
-# Search a text file for a pattern
-grep "sample1" data/metadata/samples.tsv</code></pre></div>
+# Search recursively for files matching a pattern
+find results/ -name "*.fastq.gz" | head -10</code></pre></div>
 
           <h3 id="directories">Working with directories</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -166,32 +160,32 @@ ls -R results/
 # Move between directories
 cd results/01-qc
 pwd
-cd $WORKDIR         # back to working directory</code></pre></div>
+cd /ibex/user/$USER/metagenomics_course   # back to working directory</code></pre></div>
 
-          <h2 id="step-5-conda">Step 5: Conda Environments</h2>
-          <p>Each module uses a dedicated conda environment. Activate the correct one before running any tools.</p>
+          <h2 id="step-5-conda">Step 5: Module Load and Conda Environments</h2>
+          <p>Most tools in this course are pre-installed on Ibex and loaded with <code>module load</code>. Conda is only needed for the handful of tools not available as Ibex modules.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># List all available environments
+          <pre><code># Most tools: load directly from the Ibex module stack
+module load fastqc fastp bowtie2 samtools megahit spades
+fastqc --version
+
+# List all available environments
 conda env list
 
-# Activate the QC environment (used for Module 1)
-conda activate metagenomics-qc
+# For tools not on Ibex, activate the conda env using the self-sourcing guard
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
-# Verify tools are available
-fastqc --version
-fastp --version
-bowtie2 --version
-
-# Deactivate when done
+pydamage --version
 conda deactivate</code></pre></div>
 
           <div class="callout callout-note">
-            <strong>Environment names used in this course</strong>
-            <code>metagenomics-qc</code>: FastQC, fastp, Bowtie2, BBNorm, NanoPlot, Chopper<br>
-            <code>metagenomics-assembly</code>: MEGAHIT, SPAdes, Flye, QUAST, Prodigal, geNomad<br>
-            <code>metagenomics-binning</code>: MetaBAT2, MaxBin2, CONCOCT, COMEBin, SemiBin2, Tiara, DAS Tool<br>
-            <code>metagenomics-binqc</code>: CheckM2, BUSCO, GUNC<br>
-            <code>metagenomics-taxonomy</code>: GTDB-Tk, CAT, Prokka, MetaEuk
+            <strong>Conda environments in this course</strong>
+            <code>metagenomics</code> (Python 3.10): tools not on Ibex — PyDamage, GUNC, SemiBin2, MetaEuk, ALE, metaMDBG, Chopper, NanoQ, BigMAG, Porechop ABI<br>
+            <code>tiara</code>: Tiara domain classifier (separate env due to joblib version conflict)<br>
+            <code>comebin</code>: COMEBin binner (separate env due to joblib version conflict)<br>
+            The sbatch scripts for each tool activate the correct environment automatically.
           </div>
 
           <h2 id="step-6-slurm">Step 6: SLURM Job Submission</h2>
@@ -209,25 +203,33 @@ conda deactivate</code></pre></div>
           <h3 id="batch">Batch job</h3>
           <p>Use <code>sbatch</code> for long-running steps (assembly, GTDB-Tk) that you do not need to watch interactively:</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>cat > my_job.sh << 'EOF'
+          <pre><code>cat > scripts/my_job.sh << 'EOF'
 #!/bin/bash
 #SBATCH --job-name=my_job
 #SBATCH --partition=batch
 #SBATCH --time=04:00:00
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=16
-#SBATCH --output=my_job_%j.out
-#SBATCH --error=my_job_%j.err
+#SBATCH --output=logs/my_job_%j.out
+#SBATCH --error=logs/my_job_%j.err
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=&lt;your@email.com&gt;
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-source ~/.bashrc
-conda activate metagenomics-assembly
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+
+# For Ibex module tools:
+module load <toolname>
+
+# For tools not on Ibex (conda env):
+# source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+#     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+# conda activate metagenomics
 
 # your command here
 EOF
 
-sbatch my_job.sh</code></pre></div>
+sbatch scripts/my_job.sh</code></pre></div>
 
           <div class="callout callout-note">
             <strong>Targeting specific node types</strong>
@@ -272,10 +274,6 @@ sinfo</code></pre></div>
             <li>Search for the database you need and click <strong>Request Access</strong></li>
             <li>Access is granted automatically and is valid for <strong>6 months</strong> (renewable)</li>
           </ol>
-          <div class="callout callout-note">
-            <strong>Course databases</strong>
-            The instructors have pre-staged all databases needed for this course under <code>/ibex/project/c2xxx/metagenomics_course/databases/</code>. You do not need to request Ibex reference data access separately: just use the course paths provided.
-          </div>
 
           <h2 id="step-7-ncbi">Step 7: Downloading Public Data from NCBI</h2>
           <p>Two complementary tools cover the most common data-download scenarios: <strong>SRA Toolkit</strong> for raw sequencing reads (FASTQ) and <strong>NCBI Datasets CLI</strong> for reference genomes and assemblies.</p>
@@ -358,14 +356,14 @@ tree -h ./
 
           <div class="callout callout-tip">
             <strong>Course shortcut</strong>
-            The raw data for this course are already pre-staged at <code>/biocorelab/BIX/resources/training/XXX</code>. You only need the steps above if you want to practise the download workflow or need data not included in the course data.
+            The raw reads for this course are pre-staged at <code>/biocorelab/BIX/resources/training/2026/metagenomics/raw_reads/</code>. You only need the steps above if you want to practise the download workflow.
           </div>
 
           <h3 id="ncbi-datasets">Part B: NCBI Datasets CLI (reference genomes)</h3>
           <p><a href="https://www.ncbi.nlm.nih.gov/datasets" target="_blank" rel="noopener">NCBI Datasets</a> is the modern replacement for Entrez Direct for downloading genomes and assemblies. Accessions starting with <code>GCA_</code> (GenBank) or <code>GCF_</code> (RefSeq) identify genome assemblies.</p>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>module load ncbi-datasets-cli
+          <pre><code>module load ncbi_datasets_tools
 
 # Inspect assembly metadata before downloading
 datasets summary genome accession GCA_000001635.9 | python3 -m json.tool | head -40</code></pre></div>
@@ -396,13 +394,13 @@ rm -rf ncbi_dataset GRCm39.zip</code></pre></div>
 
           <div class="callout callout-tip">
             <strong>Course shortcut</strong>
-            The GRCm39 reference genome is already pre-staged at <code>/biocorelab/BIX/resources/genomes/Ensembl-release-113/GRCm39/GRCm39.fa</code>. You only need the steps above if you want to practise the download workflow or need a genome not included in the course data.
+            The GRCm39 reference genome is pre-staged at <code>/biocorelab/BIX/resources/genomes/mus_musculus/release-113/Mus_musculus.GRCm39.dna_sm.toplevel.fa</code>. You only need the steps above if you want to practise the download workflow.
           </div>
 
           <h3 id="entrez">Part C: Entrez Direct (metadata and accession lists)</h3>
           <p>Entrez Direct (<code>esearch</code> / <code>efetch</code>) is useful for querying NCBI databases programmatically: especially for fetching run metadata or generating accession lists for a BioProject before downloading with SRA Toolkit.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>module load entrez-direct
+          <pre><code>module load edirect
 
 # Fetch all SRA run accessions for a BioProject
 esearch -db sra -query PRJNA521492 | efetch -format runinfo > PRJNA521492_runinfo.csv
