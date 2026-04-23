@@ -148,55 +148,54 @@ source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
 
           <div class="callout callout-note" style="margin-top:1rem;">
             Run the <code>source</code> line above at the start of any session where you need conda. It activates conda for that session only, without modifying your shell profile. The sbatch scripts for tools not available as Ibex modules use a self-sourcing guard that works the same way:
-            <pre style="margin:0.5rem 0 0; background:transparent; border:none; padding:0;"><code>source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+            <pre style="margin:0.5rem 0 0; border:none; padding:0;"><code>source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
           </div>
 
-          <h3 style="font-size:1.1rem; margin-top:2rem;">Create the course environment</h3>
-          <p>Once conda is active, create the single <code>metagenomics</code> environment (run on a compute node; this takes a few minutes):</p>
+          <h3 style="font-size:1.1rem; margin-top:2rem;">Create the course environments</h3>
+          <p>Three conda environments are needed. Run these on a compute node; creating all three takes 10–15 minutes:</p>
           <div style="position:relative;">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre><code>srun --partition=batch --time=01:00:00 --cpus-per-task=4 --pty bash
 
-
-# create a conda environment
-conda create -n metagenomics -c conda-forge -c bioconda -y
-
-# activate the isolated conda environment
+# ── 1. Main environment (Python 3.10 avoids version conflicts) ───────────────
+conda create -n metagenomics python=3.10 -c conda-forge -c bioconda -y
 conda activate metagenomics
-
-# install tools not available as Ibex modules
 mamba install -c conda-forge -c bioconda -y \
   pydamage \
   gunc \
-  tiara \
   semibin \
   metaeuk \
   ale \
   metamdbg \
   chopper \
   nanoq \
-  porechopabi \
   bigmag \
-  comebin
+  porechop_abi
+conda deactivate
 
-# verify
-pydamage --version
-gunc --version
-tiara --version
-SemiBin2 --version
-metaeuk version
-chopper --version
-nanoq --version
-porechop_abi --version
-bigmag --version
+# ── 2. Tiara environment ──────────────────────────────────────────────────────
+# Tiara requires joblib <0.18, which conflicts with COMEBin (joblib =1.1.0),
+# so it lives in its own environment.
+conda create -n tiara python=3.9 -c conda-forge -c bioconda tiara -y
+
+# ── 3. COMEBin environment ────────────────────────────────────────────────────
+conda create -n comebin -c conda-forge -c bioconda comebin -y
+
+# ── Verify ────────────────────────────────────────────────────────────────────
+conda activate metagenomics
+pydamage --version && gunc --version && SemiBin2 --version && \
+metaeuk version && chopper --version && nanoq --version && \
+bigmag --version && porechop_abi --version
+conda deactivate
+conda run -n tiara tiara --version
+conda run -n comebin run_comebin.sh --help 2>&1 | head -1
             </code></pre>
           </div>
 
           <div class="callout callout-tip" style="margin-top:1rem;">
-            <strong>Activate the environment</strong>
-            Each time you need a tool from this environment, run:
-            <code>conda activate metagenomics</code>. During the course, prefer <code>module load</code> when the tool is available as an Ibex module; fall back to the conda environment only when needed.
+            <strong>Three environments, three purposes</strong>
+            Most tools that are not available as Ibex modules use <code>conda activate metagenomics</code>. Tiara uses <code>conda activate tiara</code> and COMEBin uses <code>conda activate comebin</code>. The sbatch scripts for each tool activate the correct environment automatically.
           </div>
 
           <hr style="border:none;border-top:1px solid var(--color-border);margin:2.5rem 0;">
@@ -217,7 +216,7 @@ singularity --version</code></pre>
           <div class="callout callout-note" style="margin-top:1rem;">
             <strong>Use <code>-profile kaust</code></strong>
             All nf-core/mag runs in this course use the KAUST Ibex profile, which configures Slurm resources and Singularity automatically:<br>
-            <pre style="margin-top:0.5rem; padding:0.5rem 0.75rem; border-radius:6px; font-size:0.85rem;">nextflow run nf-core/mag -profile kaust ...</pre>
+            <pre style="margin-top:0.5rem; padding:0rem 0.75rem; border-radius:6px; font-size:0.85rem;">nextflow run nf-core/mag -profile kaust ...</pre>
             Details about the KAUST profile for NextFlow, the nf-core/mag workflow can be found at <a href="https://nf-co.re/configs/kaust/" target="_blank" rel="noopener">https://nf-co.re/configs/kaust/</a>
           </div>
 

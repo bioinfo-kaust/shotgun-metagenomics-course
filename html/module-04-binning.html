@@ -120,7 +120,7 @@ mkdir -p results/04-binning/tiara
 
 source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
-conda activate metagenomics
+conda activate tiara
 
 tiara \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
@@ -280,7 +280,7 @@ mkdir -p results/04-binning/comebin
 
 source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
-conda activate metagenomics
+conda activate comebin
 
 run_comebin.sh \
     -a results/02-assembly/megahit/mock_control.contigs.fa \
