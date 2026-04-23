@@ -57,7 +57,7 @@
 
           <h3 style="font-size:1.1rem; margin-top:1.5rem;">1a: Create your Ibex account</h3>
           <ul style="line-height:2; margin-left:1.25rem; margin-bottom:1rem;">
-            <li>KAUST staff and students: request access via the <a href="https://my.ibex.kaust.edu.sa" target="_blank" rel="noopener">my.ibex portal</a></li>
+            <li>KAUST staff and students: request access via the <a href="https://my.ibex.kaust.edu.sa/v2/teams" target="_blank" rel="noopener">my.ibex portal</a></li>
             <li>External collaborators: contact your KAUST PI: external accounts require PI sponsorship and VPN access</li>
           </ul>
 
@@ -65,9 +65,9 @@
             <strong>Associate your account with a PI: required before logging in</strong>
             Without PI association your account cannot submit jobs.
             <ol style="margin:0.5rem 0 0 1.25rem; line-height:2.2;">
-              <li>Log in to <a href="https://my.ibex.kaust.edu.sa" target="_blank" rel="noopener">my.ibex.kaust.edu.sa</a></li>
-              <li>Go to <strong>Membership Management</strong></li>
-              <li>Search for your PI and click <strong>Request Membership</strong></li>
+              <li>Log in to <a href="https://my.ibex.kaust.edu.sa/v2/teams" target="_blank" rel="noopener">my.ibex.kaust.edu.sa</a></li>
+              <li>Go to <strong>Teams</strong> then <strong>Member Management</strong></li>
+              <li>Search for your PI and click <strong>Nominate PI</strong></li>
               <li>Your PI will receive an email with an approval link: ask them to approve it promptly</li>
             </ol>
           </div>
@@ -123,10 +123,13 @@ df -h /ibex/user/$USER</code></pre>
           </div>
 
           <hr style="border:none;border-top:1px solid var(--color-border);margin:2.5rem 0;">
-
           <!-- Step 3 -->
           <h2 id="step-3">Step 3: Set Up the Course Conda Environment</h2>
           <p>Most bioinformatics tools used in this course are pre-installed on Ibex and loaded with <code>module load</code>. For any tool not available as an Ibex module, we use a single shared conda environment called <strong>metagenomics</strong>.</p>
+
+          <div class="callout callout-warning" style="margin-top:1rem;">
+            If you already have conda environment. SKIP to <a href="#step-3b">Create the course environments</a>
+          </div>
 
           <p style="margin-top:0.5rem;">Install Miniforge3 directly into your user space on Ibex (run once):</p>
           <div style="position:relative;">
@@ -152,7 +155,7 @@ source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
           </div>
 
-          <h3 style="font-size:1.1rem; margin-top:2rem;">Create the course environments</h3>
+          <h3 style="font-size:1.1rem; margin-top:2rem;" id="step-3b">Create the course environments</h3>
           <p>Three conda environments are needed. Run these on a compute node; creating all three takes 10–15 minutes:</p>
           <div style="position:relative;">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -329,28 +332,14 @@ fasterq-dump --split-files --threads 8 -p -v \
     ../sra_cache/SRR9291174/SRR9291174.sra
 
 # Step 3: Compress (reduces size ~4×; required by most downstream tools)
-gzip mock_control_1.fastq mock_control_2.fastq
-gzip mock_ss90_1.fastq    mock_ss90_2.fastq
+pigz -p 8 mock_control_1.fastq mock_control_2.fastq 
+gzip -p 8 mock_ss90_1.fastq    mock_ss90_2.fastq
 
 # Step 4: Remove the SRA cache: no longer needed
 rm -rf ../sra_cache
 
 # Verify: check the four output files and their sizes
 ls -lh /ibex/user/$USER/metagenomics_course/raw_reads/
-
-#########################################
-## Let's peek inside these files
-# print the top ten lines
-zcat mock_ss90_2.fastq.gz | head
-# Estimate number of sequences, bases etc?
-# load the seqkit toolkit
-module load seqkit;
-seqkit stats -a -j 10 *.fastq.gz | tee fastq_stats.txt
-
-# OR you can submit a non-interactive job to Slurm
-sbatch -J seqkit_stats -c 20 -t 2:00:00 --mail-type=END \
---mail-user=myemail@kaust.edu.sa -e logs/slurm_seqkit_stats_%j.err -o stats_fastq.txt \
---wrap="module load seqkit; seqkit stats -a -j 10 *.fastq.gz"
 </code></pre>
           </div>
 
@@ -359,6 +348,23 @@ sbatch -J seqkit_stats -c 20 -t 2:00:00 --mail-type=END \
             You should see four files in <code>raw_reads/</code>:
             <code>mock_control_1.fastq.gz</code>, <code>mock_control_2.fastq.gz</code>,
             <code>mock_ss90_1.fastq.gz</code>, <code>mock_ss90_2.fastq.gz</code>.
+          </div>
+
+          <div style="position:relative;">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code>## Let's peek inside these files
+# print the top ten lines
+zcat mock_ss90_2.fastq.gz | head
+# Estimate number of sequences, bases etc?
+# load the seqkit toolkit
+module load seqkit;
+seqkit stats -a -j 8 *.fastq.gz | tee fastq_stats.txt
+
+# OR you can submit a non-interactive job to Slurm
+sbatch -J seqkit_stats -c 20 -t 2:00:00 --mail-type=END \
+--mail-user=myemail@kaust.edu.sa -e logs/slurm_seqkit_stats_%j.err -o stats_fastq.txt \
+--wrap="module load seqkit; seqkit stats -a -j 15 *.fastq.gz"
+</code></pre>
           </div>
 
           <h3 id="step-6b" style="margin-top:2rem;">Step 6b: Download Long-Read Data (Zymo ONT)</h3>
@@ -416,7 +422,10 @@ seqkit stats -a -j 10 zymo-even_ont-r10_long.fastq.gz | tee zymo-even_ont-r10_lo
 
           <div class="callout callout-note" style="margin-top:1.5rem;">
             <strong>Course-specific database paths</strong>
-            All databases are also pre-staged by the instructors under <code>/ibex/project/c2xxx/metagenomics_course/databases/</code>. The exact paths will be provided on Day 1. Renew your reference data access before it expires (6-month validity).
+            <ul>
+              <li>your reference data access before it expires (6-month validity).</li> 
+            <li>CheckM2 database is available at <code>/biocorelab/BIX/resources/databases/</code> along with other database.</li>
+            </ul>
           </div>
 
           <div style="margin-top:3rem; display:flex; gap:1rem; flex-wrap:wrap;">
