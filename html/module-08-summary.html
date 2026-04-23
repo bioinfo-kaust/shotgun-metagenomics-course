@@ -117,6 +117,10 @@ echo "Medium-quality: $(awk -F'\t' '$NF=="MQ"' results/08-summary/bin_summary/fi
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>mkdir -p results/08-summary/bigmag
 
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
+
 bigmag \
     --checkm results/06-bin-qc/checkm2/quality_report.tsv \
     --gtdbtk results/07-taxonomy/gtdbtk/gtdbtk.bac120.summary.tsv \

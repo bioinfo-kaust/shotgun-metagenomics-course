@@ -125,7 +125,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/03-ancient-dna/pydamage
 
-module load pydamage
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
 pydamage analyze \
     results/03-ancient-dna/mapping/mock_control.sorted.bam \

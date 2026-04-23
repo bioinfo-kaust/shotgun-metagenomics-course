@@ -128,24 +128,7 @@ df -h /ibex/user/$USER</code></pre>
           <h2 id="step-3">Step 3: Set Up the Course Conda Environment</h2>
           <p>Most bioinformatics tools used in this course are pre-installed on Ibex and loaded with <code>module load</code>. For any tool not available as an Ibex module, we use a single shared conda environment called <strong>metagenomics</strong>.</p>
 
-          <h3 style="font-size:1.1rem; margin-top:1.5rem;">Option 1: Use the Ibex Miniforge module (recommended)</h3>
-          <p>Check whether the Miniforge module is available on Ibex:</p>
-          <div style="position:relative;">
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <pre><code>module avail miniforge</code></pre>
-          </div>
-
-          <p style="margin-top:1rem;">If a <code>miniforge</code> or <code>miniforge3</code> module appears, load it:</p>
-          <div style="position:relative;">
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <pre><code>module load miniforge3
-
-# Initialise conda for the current session (no .bashrc modification)
-source $(conda info --base)/etc/profile.d/conda.sh</code></pre>
-          </div>
-
-          <h3 style="font-size:1.1rem; margin-top:2rem;">Option 2: Install Miniforge in your own space</h3>
-          <p>If the Ibex module is not available, install Miniforge3 directly into your user directory:</p>
+          <p style="margin-top:0.5rem;">Install Miniforge3 directly into your user space on Ibex (run once):</p>
           <div style="position:relative;">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre><code>cd /ibex/user/$USER
@@ -164,28 +147,55 @@ source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
           </div>
 
           <div class="callout callout-note" style="margin-top:1rem;">
-            Run the <code>source</code> command above at the start of any session where you need conda. It activates conda for that session only, without modifying your shell profile.
+            Run the <code>source</code> line above at the start of any session where you need conda. It activates conda for that session only, without modifying your shell profile. The sbatch scripts for tools not available as Ibex modules use a self-sourcing guard that works the same way:
+            <pre style="margin:0.5rem 0 0; border:none; padding:0;"><code>source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh</code></pre>
           </div>
 
-          <h3 style="font-size:1.1rem; margin-top:2rem;">Create the course environment</h3>
-          <p>Once conda is active, create the single <code>metagenomics</code> environment (run on a compute node; this takes a few minutes):</p>
+          <h3 style="font-size:1.1rem; margin-top:2rem;">Create the course environments</h3>
+          <p>Three conda environments are needed. Run these on a compute node; creating all three takes 10–15 minutes:</p>
           <div style="position:relative;">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre><code>srun --partition=batch --time=01:00:00 --cpus-per-task=4 --pty bash
 
-# install missing tools IF available in any of the conda repos
-mamba create -n metagenomics -c conda-forge -c bioconda -y \
-pydamage
-
-# activate the env
+# ── 1. Main environment (Python 3.10 avoids version conflicts) ───────────────
+conda create -n metagenomics python=3.10 -c conda-forge -c bioconda -y
 conda activate metagenomics
+mamba install -c conda-forge -c bioconda -y \
+  pydamage \
+  gunc \
+  semibin \
+  metaeuk \
+  ale \
+  metamdbg \
+  chopper \
+  nanoq \
+  bigmag \
+  porechop_abi
+conda deactivate
+
+# ── 2. Tiara environment ──────────────────────────────────────────────────────
+# Tiara requires joblib <0.18, which conflicts with COMEBin (joblib =1.1.0),
+# so it lives in its own environment.
+conda create -n tiara -c conda-forge -c bioconda python=3.7 tiara -y
+
+# ── 3. COMEBin environment ────────────────────────────────────────────────────
+conda create -n comebin -c conda-forge -c bioconda comebin -y
+
+# ── Verify ────────────────────────────────────────────────────────────────────
+conda activate metagenomics
+pydamage --version && gunc --version && SemiBin2 --version && \
+metaeuk version && chopper --version && nanoq --version && \
+bigmag --version && porechop_abi --version
+conda deactivate
+conda run -n tiara tiara --version
+conda run -n comebin run_comebin.sh --help 2>&1 | head -1
             </code></pre>
           </div>
 
           <div class="callout callout-tip" style="margin-top:1rem;">
-            <strong>Activate the environment</strong>
-            Each time you need a tool from this environment, run:
-            <code>conda activate metagenomics</code>. During the course, prefer <code>module load</code> when the tool is available as an Ibex module; fall back to the conda environment only when needed.
+            <strong>Three environments, three purposes</strong>
+            Most tools that are not available as Ibex modules use <code>conda activate metagenomics</code>. Tiara uses <code>conda activate tiara</code> and COMEBin uses <code>conda activate comebin</code>. The sbatch scripts for each tool activate the correct environment automatically.
           </div>
 
           <hr style="border:none;border-top:1px solid var(--color-border);margin:2.5rem 0;">
@@ -204,9 +214,10 @@ singularity --version</code></pre>
           </div>
 
           <div class="callout callout-note" style="margin-top:1rem;">
-            <strong>Always use <code>-profile kaust</code></strong>
-            All nf-core/mag runs in this course use the KAUST Ibex profile, which configures Slurm resources and Singularity automatically:
-            <pre style="margin-top:0.5rem; background:var(--color-border); padding:0.5rem 0.75rem; border-radius:6px; font-size:0.85rem;">nextflow run nf-core/mag -profile kaust ...</pre>
+            <strong>Use <code>-profile kaust</code></strong>
+            All nf-core/mag runs in this course use the KAUST Ibex profile, which configures Slurm resources and Singularity automatically:<br>
+            <pre style="margin-top:0.5rem; padding:0rem 0.75rem; border-radius:6px; font-size:0.85rem;">nextflow run nf-core/mag -profile kaust ...</pre>
+            Details about the KAUST profile for NextFlow, the nf-core/mag workflow can be found at <a href="https://nf-co.re/configs/kaust/" target="_blank" rel="noopener">https://nf-co.re/configs/kaust/</a>
           </div>
 
           <hr style="border:none;border-top:1px solid var(--color-border);margin:2.5rem 0;">
@@ -224,21 +235,24 @@ srun --partition=batch --time=00:30:00 --mem=4G --cpus-per-task=2 --pty bash
 cd /ibex/user/$USER/metagenomics_course
 df -h /ibex/user/$USER
 
+# Check the conda environment (activate first)
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+
+
+# check for tools available in the Ibex app stack
+module avail toolX toolY toolZ
+module load toolX toolY toolZ
+
 # Check Nextflow and Singularity
 module load nextflow singularity
 nextflow -version
 singularity --version
 
-# Check the conda environment (activate first)
-source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
-    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
-
+# check for tools installed using the conda env
 conda activate metagenomics
-fastqc --version
-fastp --version
-megahit --version
-checkm2 --version
-gtdbtk --version
+gunc --version
+...
 conda deactivate</code></pre>
           </div>
 
@@ -265,7 +279,7 @@ conda deactivate</code></pre>
             The host removal step (Module 1) uses the <strong>C57BL/6 mouse reference genome GRCm39</strong>
             (<a href="https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_000001635.9/" target="_blank" rel="noopener">NCBI: GCA_000001635.9</a>).
             This genome is pre-staged by the instructors at
-            <code>/ibex/project/c2xxx/metagenomics_course/references/GRCm39_GCA_000001635.9.fa</code>.
+            <code>/biocorelab/BIX/resources/genomes/mus_musculus/release-113/Mus_musculus.GRCm39.dna_sm.toplevel.fa</code>.
             The exact path will be confirmed on Day 1.
           </div>
 
@@ -292,7 +306,7 @@ mkdir -p raw_reads sra_cache
 cd raw_reads
 
 # Load SRA Toolkit (provides prefetch and fasterq-dump)
-module load sra-tools
+module load sratoolkit
 
 # Step 1: Download SRA container files
 # prefetch saves .sra files to sra_cache/: resumable if the connection drops
@@ -322,7 +336,22 @@ gzip mock_ss90_1.fastq    mock_ss90_2.fastq
 rm -rf ../sra_cache
 
 # Verify: check the four output files and their sizes
-ls -lh /ibex/user/$USER/metagenomics_course/raw_reads/</code></pre>
+ls -lh /ibex/user/$USER/metagenomics_course/raw_reads/
+
+#########################################
+## Let's peek inside these files
+# print the top ten lines
+zcat mock_ss90_2.fastq.gz | head
+# Estimate number of sequences, bases etc?
+# load the seqkit toolkit
+module load seqkit;
+seqkit stats -a -j 10 *.fastq.gz | tee fastq_stats.txt
+
+# OR you can submit a non-interactive job to Slurm
+sbatch -J seqkit_stats -c 20 -t 2:00:00 --mail-type=END \
+--mail-user=myemail@kaust.edu.sa -e logs/slurm_seqkit_stats_%j.err -o stats_fastq.txt \
+--wrap="module load seqkit; seqkit stats -a -j 10 *.fastq.gz"
+</code></pre>
           </div>
 
           <div class="callout callout-note" style="margin-top:1rem;">
@@ -340,14 +369,19 @@ ls -lh /ibex/user/$USER/metagenomics_course/raw_reads/</code></pre>
 
 wget -q \
     https://s3.climb.ac.uk/nanopore/Zymo-GridION-EVEN-BB-SN-PCR-R10HC-flipflop.fq.gz \
-    -O zymo_long.fastq.gz
+    -O zymo-even_ont-r10_long.fastq.gz
 
 # Verify the download
-ls -lh zymo_long.fastq.gz</code></pre></div>
+ls -lh zymo-even_ont-r10_long.fastq.gz
+
+# count number sequences and fetch throughput
+module load seqkit;
+seqkit stats -a -j 10 zymo-even_ont-r10_long.fastq.gz | tee zymo-even_ont-r10_long.fastq.stats
+</code></pre></div>
 
           <div class="callout callout-note" style="margin-top:1rem;">
             <strong>Expected file</strong>
-            <code>raw_reads/zymo_long.fastq.gz</code>: the Zymo R10HC ONT reads used in Module 1 (Steps 6–9) and Module 2 (long-read and hybrid assembly).
+            <code>raw_reads/zymo-even_ont-r10_long.fastq.gz</code>: the Zymo R10HC ONT reads used in Module 1 (Steps 6–9) and Module 2 (long-read and hybrid assembly).
           </div>
 
           <div class="callout callout-tip" style="margin-top:1rem;">

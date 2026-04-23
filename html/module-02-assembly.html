@@ -242,7 +242,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/metamdbg
 
-module load metamdbg
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
 metaMDBG asm \
     --out-dir results/02-assembly/metamdbg \
@@ -290,7 +292,11 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/ale
 
-module load bowtie2 samtools ale
+module load bowtie2 samtools
+
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
 bowtie2-build \
     results/02-assembly/megahit/mock_control.contigs.fa \

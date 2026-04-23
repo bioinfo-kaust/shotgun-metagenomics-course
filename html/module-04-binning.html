@@ -89,7 +89,7 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/coverage
 
-module load metabat2
+module load metabat
 
 jgi_summarize_bam_contig_depths \
     --outputDepth results/04-binning/coverage/mock_control.depth.txt \
@@ -118,7 +118,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/tiara
 
-module load tiara
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate tiara
 
 tiara \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
@@ -158,7 +160,7 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/metabat2
 
-module load metabat2
+module load metabat
 
 metabat2 \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
@@ -191,7 +193,7 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/maxbin2
 
-module load maxbin2
+module load maxbin
 
 run_MaxBin.pl \
     -contig results/02-assembly/megahit/mock_control.contigs.fa \
@@ -276,7 +278,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/comebin
 
-module load comebin
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate comebin
 
 run_comebin.sh \
     -a results/02-assembly/megahit/mock_control.contigs.fa \
@@ -307,7 +311,9 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/semibin2
 
-module load semibin
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
 
 SemiBin2 single_easy_bin \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
