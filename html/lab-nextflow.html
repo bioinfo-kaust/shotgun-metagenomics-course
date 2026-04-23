@@ -58,14 +58,14 @@
           <h2 id="step-1-load">Step 1: Load Nextflow on Ibex</h2>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code># Load the Nextflow module
-module load nextflow/23.10.0
+module load nextflow
 
 # Verify
 nextflow -version</code></pre></div>
 
           <p>Expected output:</p>
           <pre><code>      N E X T F L O W
-      version 23.10.0 build 5889
+      version XX.xx.xx build xxxx
       ...</code></pre>
 
           <div class="callout callout-note">
@@ -115,7 +115,7 @@ nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
 cat > samplesheet.csv << 'EOF'
 sample,group,short_reads_1,short_reads_2,long_reads
 sample1,group1,data/reads/sample1_R1.fastq.gz,data/reads/sample1_R2.fastq.gz,
-sample2,group1,data/reads/sample2_R1.fastq.gz,data/reads/sample2_R2.fastq.gz,raw_reads/zymo_long.fastq.gz
+sample2,group1,data/reads/sample2_R1.fastq.gz,data/reads/sample2_R2.fastq.gz,raw_reads/zymo-even_ont-r10_long.fastq.gz
 EOF
 
 # Verify it looks correct

@@ -177,7 +177,7 @@ conda deactivate
 # ── 2. Tiara environment ──────────────────────────────────────────────────────
 # Tiara requires joblib <0.18, which conflicts with COMEBin (joblib =1.1.0),
 # so it lives in its own environment.
-conda create -n tiara python=3.9 -c conda-forge -c bioconda tiara -y
+conda create -n tiara -c conda-forge -c bioconda python=3.7 tiara -y
 
 # ── 3. COMEBin environment ────────────────────────────────────────────────────
 conda create -n comebin -c conda-forge -c bioconda comebin -y
