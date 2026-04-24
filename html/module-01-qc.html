@@ -238,8 +238,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=qc_04_phix
 #SBATCH --partition=batch
 #SBATCH --time=01:00:00
-#SBATCH --mem=8G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=120G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/qc_04_phix_%j.out
 #SBATCH --error=logs/qc_04_phix_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -251,7 +251,7 @@ EOF</code></pre></div>
 set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
-PHIX_URL="ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/viral/Enterobacteria_phage_phiX174_sensu_lato/all_assembly_versions/GCA_002596845.1_ASM259684v1/GCA_002596845.1_ASM259684v1_genomic.fna.gz"
+PHIX_URL="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/596/845/GCA_002596845.1_ASM259684v1/GCA_002596845.1_ASM259684v1_genomic.fna.gz"
 if [ ! -f references/phix174.fna.gz ]; then
     mkdir -p references db/phix_index
     wget -q "$PHIX_URL" -O references/phix174.fna.gz
@@ -269,7 +269,7 @@ bowtie2 \
     -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
     -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     --un-conc-gz results/01-qc/host_removal/mock_control_%.phix_removed.fastq.gz \
-    -p 8 --sensitive \
+    -p 16 --sensitive \
     -S /dev/null 2> results/01-qc/host_removal/mock_control.phix.log
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_04_phix_removal.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
@@ -281,8 +281,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=qc_05_bbnorm
 #SBATCH --partition=batch
 #SBATCH --time=02:00:00
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/qc_05_bbnorm_%j.out
 #SBATCH --error=logs/qc_05_bbnorm_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -301,7 +301,7 @@ bbnorm.sh \
     in2=results/01-qc/host_removal/mock_control_2.phix_removed.fastq.gz \
     out=results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
     out2=results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
-    target=100 min=5 threads=8
+    target=100 mindepth=5 threads=16
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_05_bbnorm.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
@@ -356,8 +356,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=qc_07_porechop
 #SBATCH --partition=batch
 #SBATCH --time=02:00:00
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/qc_07_porechop_%j.out
 #SBATCH --error=logs/qc_07_porechop_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -377,7 +377,7 @@ conda activate metagenomics
 porechop_abi \
     -i raw_reads/zymo-even_ont-r10_long.fastq.gz \
     -o results/01-qc/porechop/zymo_long.porechop.fastq.gz \
-    --threads 8
+    --threads 16
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_07_porechop.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
@@ -389,8 +389,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=qc_08_filter
 #SBATCH --partition=batch
 #SBATCH --time=01:00:00
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/qc_08_filter_%j.out
 #SBATCH --error=logs/qc_08_filter_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -409,26 +409,26 @@ source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
 conda activate metagenomics
 
 gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
-    chopper --quality 8 --minlength 1000 --threads 8 | \
+    chopper --quality 8 --minlength 1000 --threads 16 | \
     gzip > results/01-qc/filtered/zymo_long.chopper.fastq.gz
 
 # Option B: Filtlong; keep best reads by length and quality (uncomment to use)
-# module load filtlong
-# filtlong \
-#     --min_length 1000 \
-#     --keep_percent 90 \
-#     results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
-#     gzip > results/01-qc/filtered/zymo_long.filtlong.fastq.gz
+ module load filtlong
+ filtlong \
+     --min_length 1000 \
+     --keep_percent 90 \
+     results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
+     gzip > results/01-qc/filtered/zymo_long.filtlong.fastq.gz
 
 # Option C: Nanoq; fast filtering with JSON statistics (uncomment to use)
 # source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
 #     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
 # conda activate metagenomics
-# nanoq \
-#     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
-#     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
-#     --min-len 1000 --min-qual 8 \
-#     --report results/01-qc/filtered/zymo_long.nanoq.json
+ nanoq \
+     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
+     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
+     --min-len 1000 --min-qual 8 \
+     --report results/01-qc/filtered/zymo_long.nanoq.json
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_08_filtering.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
