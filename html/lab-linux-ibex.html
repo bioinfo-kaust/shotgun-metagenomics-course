@@ -46,7 +46,11 @@
           <ul>
             <li>Connect to Ibex via SSH and verify your environment</li>
             <li>Understand Ibex storage tiers and where to put course files</li>
-            <li>Inspect FASTQ and TSV files using standard Linux tools</li>
+            <li>Navigate the filesystem and manage files with core Linux commands</li>
+            <li>Inspect FASTQ and FASTA files using <code>zcat</code>, <code>zless</code>, <code>grep</code>, and <code>awk</code></li>
+            <li>Redirect output, capture stderr, and run lightweight jobs in the background</li>
+            <li>Process tabular results with <code>cut</code>, <code>sort</code>, and <code>awk</code></li>
+            <li>Archive and transfer result directories with <code>tar</code> and <code>rsync</code></li>
             <li>Activate and manage conda environments for course tools</li>
             <li>Submit, monitor, and cancel SLURM jobs</li>
             <li>Download public sequencing data from NCBI SRA using <code>prefetch</code> and <code>fasterq-dump</code></li>
@@ -119,48 +123,104 @@ cd /ibex/user/$USER/metagenomics_course
 # Confirm available space
 df -h /ibex/user/$USER</code></pre></div>
 
-          <h2 id="step-4-commands">Step 4: Essential Commands for This Course</h2>
-          <p>Practice these commands on the course FASTQ files: you will use them in every module.</p>
+          <h2 id="step-4-commands">Step 4: Essential Linux Commands</h2>
+          <p>Practice these commands on the course files: you will use them throughout every module.</p>
 
-          <h3 id="viewing-files">Viewing and inspecting files</h3>
+          <h3 id="nav-ops">Navigation &amp; file operations</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>cd /ibex/user/$USER/metagenomics_course
 
-# Peek at a gzip-compressed FASTQ (4 lines = 1 read)
-zcat raw_reads/mock_control_1.fastq.gz | head -8
+pwd                          # print current working directory
+ls -a                        # list all files including hidden ones
+ls -lh raw_reads/*.fastq.gz  # file sizes matching a glob
 
-# Count the number of reads (lines ÷ 4)
+mkdir -p results/01-qc/logs  # create nested directories in one step
+cd results/01-qc/logs
+cd ..                        # go up one level
+pwd
+
+# Copy pre-staged course reads to your working directory
+# -r: recursive  -t: preserve timestamps
+rsync -rt /biocorelab/BIX/resources/training/2026/metagenomics/raw_reads/ \
+    /ibex/user/$USER/metagenomics_course/raw_reads/
+
+# Make a script executable before submitting with sbatch
+chmod 755 scripts/run_pipeline.sh</code></pre></div>
+
+          <h3 id="inspecting-files">Inspecting sequence files</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Peek at a gzip-compressed FASTQ (4 lines = 1 read: header, seq, +, quality)
+zcat raw_reads/mock_control_1.fastq.gz | head -12
+
+# View the last read — caution: avoid tail on large files (reads the entire file first)
+zcat raw_reads/mock_control_1.fastq.gz | tail -4
+
+# Scroll through interactively (q to quit)
+zless raw_reads/mock_control_1.fastq.gz
+
+# Count total lines then divide by 4 for read count
 zcat raw_reads/mock_control_1.fastq.gz | wc -l
 
-# Scroll through a file interactively (q to quit)
-zcat raw_reads/mock_control_1.fastq.gz | less
-
 # Show file sizes
-ls -lh raw_reads/</code></pre></div>
+ls -lh raw_reads/*.fastq.gz</code></pre></div>
 
-          <h3 id="searching">Searching and filtering</h3>
+          <h3 id="searching">Searching &amp; counting</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Count read headers (lines starting with @)
-zcat raw_reads/mock_control_1.fastq.gz | grep -c "^@"
+          <pre><code># Count reads in a FASTQ file (each read header starts with @)
+zgrep -c "^@" raw_reads/mock_control_1.fastq.gz # gzip-compressed
+grep -c "^@" raw_reads/mock_control_1.fastq              # uncompressed
 
-# Show read quality scores (line 4 of every 4-line block)
-zcat raw_reads/mock_control_1.fastq.gz | awk 'NR%4==0' | head -5
+# Count sequences in a FASTA file (each entry starts with >)
+grep "^>" references/GRCm39.fa | wc -l
 
-# Search recursively for files matching a pattern
-find results/ -name "*.fastq.gz" | head -10</code></pre></div>
+# List files containing a pattern
+grep -l "^@SRR" raw_reads/*.fastq
 
-          <h3 id="directories">Working with directories</h3>
+# Count all .fastq.gz files recursively
+find . -name "*.fastq.gz" | wc -l</code></pre></div>
+
+          <h3 id="redirection">Redirection &amp; background jobs</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Create a nested directory structure
-mkdir -p results/01-qc/fastqc
+          <pre><code># Save output to a file (> overwrites existing content — be careful!)
+zcat raw_reads/mock_control_1.fastq.gz | head -12 > my_seqs.fastq
 
-# Show a tree-like directory listing
-ls -R results/
+# Append more reads; capture stderr in a separate file
+# >> appends  2> redirects stderr
+zcat raw_reads/mock_control_1.fastq.gz | head -400 \
+    | tail -12 >> my_seqs.fastq 2>err.txt
 
-# Move between directories
-cd results/01-qc
-pwd
-cd /ibex/user/$USER/metagenomics_course   # back to working directory</code></pre></div>
+# Run a command in the background (& returns the prompt immediately)
+grep -l "^@SRR" raw_reads/*.fastq \
+    > fq_files_with_pattern.txt &</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>Background jobs (&amp;) on login nodes</strong>
+            Lightweight shell commands with <code>&amp;</code> on the login node are fine. For anything computationally intensive — quality control, assembly, binning — always use <code>sbatch</code> so the work runs on a compute node and does not impact other users.
+          </div>
+
+          <h3 id="text-processing">Text processing</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Top 5 taxa by read count from a Bracken report (field 6 = reads assigned)
+cut -f1,6 results/taxonomy/bracken_output.txt \
+    | sort -t$'\t' -k2 -rn | head -5
+
+# Filter taxa with more than 1000 reads assigned
+awk -F'\t' '$6 > 1000 {print $1, $6}' \
+    results/taxonomy/bracken_output.txt
+
+# Show read quality scores (line 4 of every 4-line FASTQ block)
+zcat raw_reads/mock_control_1.fastq.gz | awk 'NR%4==0' | head -5</code></pre></div>
+
+          <h3 id="archiving">Archiving</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Compress a results directory into a single archive
+tar -czf results.tar.gz results/
+
+# List archive contents without extracting
+tar -tzf results.tar.gz
+
+# Extract archive
+tar -xzf results.tar.gz</code></pre></div>
 
           <h2 id="step-5-conda">Step 5: Module Load and Conda Environments</h2>
           <p>Most tools in this course are pre-installed on Ibex and loaded with <code>module load</code>. Conda is only needed for the handful of tools not available as Ibex modules.</p>
@@ -450,7 +510,16 @@ screen -r metagenomics</code></pre></div>
               <li><a href="#step-1-connect">Step 1: Connect to Ibex</a></li>
               <li><a href="#step-2-filesystem">Step 2: Filesystem Layout</a></li>
               <li><a href="#step-3-workdir">Step 3: Working Directory</a></li>
-              <li><a href="#step-4-commands">Step 4: Essential Commands</a></li>
+              <li><a href="#step-4-commands">Step 4: Essential Commands</a>
+                <ul style="margin-top:0.3rem; margin-left:1rem; line-height:2;">
+                  <li><a href="#nav-ops">Navigation &amp; files</a></li>
+                  <li><a href="#inspecting-files">Inspecting sequences</a></li>
+                  <li><a href="#searching">Searching &amp; counting</a></li>
+                  <li><a href="#redirection">Redirection &amp; background</a></li>
+                  <li><a href="#text-processing">Text processing</a></li>
+                  <li><a href="#archiving">Archiving</a></li>
+                </ul>
+              </li>
               <li><a href="#step-5-conda">Step 5: Conda Environments</a></li>
               <li><a href="#step-6-slurm">Step 6: SLURM</a></li>
               <li><a href="#policy-limits">Policy limits</a></li>
