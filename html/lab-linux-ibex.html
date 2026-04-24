@@ -83,12 +83,6 @@
             Login nodes are shared resources: do not run tools, scripts, or any computationally intensive commands directly on them. Use <code>srun</code> (interactive) or <code>sbatch</code> (batch) for all course steps.
           </div>
 
-          <p>Verify you are connected and check your identity:</p>
-          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code>hostname        # should show ilogin1 or ilogin2
-whoami          # your username
-echo $HOME      # your home directory</code></pre></div>
-
           <h2 id="step-2-filesystem">Step 2: Ibex Filesystem Layout</h2>
           <p>Ibex has four storage locations. Use the right one: performance and retention policies differ significantly:</p>
 
@@ -103,15 +97,42 @@ echo $HOME      # your home directory</code></pre></div>
           </table>
 
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          <pre><code># Check your home directory quota
-quota -s
-
-# Check your user HPC space (use this for course work)
+          <pre><code># Check your user HPC space (use this for course work)
 df -h /ibex/user/$USER
 
 # Course data (pre-staged, read-only)
 COURSE_DIR=/biocorelab/BIX/resources/training/2026/metagenomics
 ls $COURSE_DIR</code></pre></div>
+
+          <h3 id="desktop-access">Accessing Ibex files from your desktop</h3>
+          <p>You can browse and transfer files without the command line using your OS's built-in file manager or MobaXterm's SFTP client. Both mount or browse <code>/ibex/user/&lt;username&gt;</code> directly.</p>
+
+          <h4 style="margin-top:1.25rem;">macOS Finder (SMB)</h4>
+          <ol style="line-height:2.2; margin-left:1.25rem;">
+            <li>In Finder, open <strong>Go &rarr; Connect to Server</strong> (or press <kbd>&#8984;K</kbd>)</li>
+            <li>Enter the SMB address — replace <code>USERNAME</code> with your Ibex username:<br>
+              <code>smb://USERNAME@samba.ibex.kaust.edu.sa/weka_user/USERNAME/</code></li>
+            <li>Click <strong>Connect</strong> and authenticate with your Ibex password</li>
+            <li>The share mounts as a network drive in Finder — you can drag and drop files directly</li>
+          </ol>
+
+          <div class="callout callout-note">
+            <strong>On-campus or VPN required</strong>
+            The SMB share is only reachable from the KAUST network. If you are off-campus, connect to the KAUST VPN first, then mount the share.
+          </div>
+
+          <h4 style="margin-top:1.25rem;">Windows — MobaXterm SFTP</h4>
+          <ol style="line-height:2.2; margin-left:1.25rem;">
+            <li>Open MobaXterm and click <strong>Session &rarr; SFTP</strong></li>
+            <li>Set <strong>Remote host</strong> to <code>ilogin.ibex.kaust.edu.sa</code> and enter your username</li>
+            <li>Click <strong>OK</strong> — the left panel shows your local files, the right panel shows Ibex</li>
+            <li>Navigate to <code>/ibex/user/&lt;username&gt;/metagenomics_course</code> and drag files between panels</li>
+          </ol>
+
+          <div class="callout callout-tip">
+            <strong>For large transfers, use rsync</strong>
+            GUI clients are convenient for browsing and small files. For transferring large FASTQ or result directories, use <code>rsync</code> on the command line — it is faster and resumable if interrupted.
+          </div>
 
           <h2 id="step-3-workdir">Step 3: Set Up Your Working Directory</h2>
           <p>Use <code>/ibex/user/$USER</code> for all course work: it has 1.5 TB, high-performance WekaIO storage, and persists for the lifetime of your account.</p>
@@ -508,7 +529,11 @@ screen -r metagenomics</code></pre></div>
             <ul>
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#step-1-connect">Step 1: Connect to Ibex</a></li>
-              <li><a href="#step-2-filesystem">Step 2: Filesystem Layout</a></li>
+              <li><a href="#step-2-filesystem">Step 2: Filesystem Layout</a>
+                <ul style="margin-top:0.3rem; margin-left:1rem; line-height:2;">
+                  <li><a href="#desktop-access">Desktop access</a></li>
+                </ul>
+              </li>
               <li><a href="#step-3-workdir">Step 3: Working Directory</a></li>
               <li><a href="#step-4-commands">Step 4: Essential Commands</a>
                 <ul style="margin-top:0.3rem; margin-left:1rem; line-height:2;">
