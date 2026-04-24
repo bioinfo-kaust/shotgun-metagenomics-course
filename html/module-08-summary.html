@@ -142,7 +142,7 @@ mock_ss90,group1,raw_reads/mock_ss90_1.fastq.gz,raw_reads/mock_ss90_2.fastq.gz,<
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>nextflow run nf-core/mag \
     -r 5.4.2 \
-    -profile singularity \
+    -profile kaust \
     --input samplesheet.csv \
     --outdir results/nfcore_mag \
     --host_fasta data/reference/host_genome.fa \
@@ -193,7 +193,7 @@ mock_ss90,group1,raw_reads/mock_ss90_1.fastq.gz,raw_reads/mock_ss90_2.fastq.gz,<
             <tbody>
               <tr><td><code>--input</code></td><td>required</td><td>Path to samplesheet CSV</td></tr>
               <tr><td><code>--outdir</code></td><td>required</td><td>Output directory</td></tr>
-              <tr><td><code>-profile</code></td><td>-</td><td>Execution profile: <code>singularity</code>, <code>docker</code>, <code>conda</code></td></tr>
+              <tr><td><code>-profile</code></td><td>-</td><td>Execution profile: <code>kaust</code>, <code>docker</code>, <code>conda</code></td></tr>
               <tr><td><code>--ancient_dna</code></td><td>false</td><td>Enable PyDamage + FreeBayes + BCFtools ancient DNA workflow</td></tr>
               <tr><td><code>--coassemble_group</code></td><td>false</td><td>Co-assemble all samples in a group</td></tr>
               <tr><td><code>--binning_map_mode</code></td><td>group</td><td>Coverage mapping scope: <code>group</code>, <code>sample</code>, or <code>all</code></td></tr>
