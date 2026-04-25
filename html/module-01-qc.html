@@ -316,7 +316,7 @@ EOF</code></pre></div>
             <strong>Course dataset: long reads</strong>
             The long-read section uses a Zymo ZymoBIOMICS mock community dataset sequenced on Oxford Nanopore GridION with R10 high-accuracy (R10HC) chemistry: an even-abundance community of 10 microbial species. Download it in <a href="setup.html#step-6">Setup Step 6</a> before running these scripts; it will be saved as <code>raw_reads/zymo-even_ont-r10_long.fastq.gz</code>.
           </div>
-
+          
           <h3 id="step-6-nanoplot">Step 6: Long Read Quality Assessment with NanoPlot</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>cat > scripts/qc_06_nanoplot.sh << 'EOF'
@@ -381,6 +381,41 @@ porechop_abi \
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_07_porechop.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
+          <h3 id="step-7b-nanolyse">Step 7b: Lambda Phage Depletion with NanoLyse <em style="font-weight:400; font-size:0.85em;">(optional)</em></h3>
+          <p>Lambda phage DNA is often added as a sequencing calibration spike-in in Oxford Nanopore library preparation kits. NanoLyse maps reads against the built-in Lambda NEB3011 reference and discards any that align.</p>
+
+          <div class="callout callout-note">
+            <strong>When to run this step</strong>
+            Only needed if your ONT library preparation included a Lambda spike-in. The course Zymo dataset does not, so this step is included for practice only. If you run it, use <code>results/01-qc/nanolyse/zymo_long.nanolyse.fastq.gz</code> as the input to Step 8 instead of the Porechop output.
+          </div>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/qc_07b_nanolyse.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=qc_07b_nanolyse
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=4
+#SBATCH --output=logs/qc_07b_nanolyse_%j.out
+#SBATCH --error=logs/qc_07b_nanolyse_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/01-qc/nanolyse
+
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
+
+gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz \
+    | NanoLyse \
+    | gzip > results/01-qc/nanolyse/zymo_long.nanolyse.fastq.gz
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/qc_07b_nanolyse.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
           <h3 id="step-8-long-read-filtering">Step 8: Quality &amp; Length Filtering</h3>
           <p>Three complementary options for long read filtering. Option A (Chopper) is the default; uncomment Options B or C to use instead.</p>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -403,16 +438,7 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/filtered
 
-# Option A: Chopper; quality + minimum length filter
-source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
-    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
-conda activate metagenomics
-
-gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
-    chopper --quality 8 --minlength 1000 --threads 16 | \
-    gzip > results/01-qc/filtered/zymo_long.chopper.fastq.gz
-
-# Option B: Filtlong; keep best reads by length and quality (uncomment to use)
+# Option A: Filtlong; keep best reads by length and quality (uncomment to use)
  module load filtlong
  filtlong \
      --min_length 1000 \
@@ -420,15 +446,24 @@ gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
      results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
      gzip > results/01-qc/filtered/zymo_long.filtlong.fastq.gz
 
+# Option B: Chopper; quality + minimum length filter
+#source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+#    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+#conda activate metagenomics
+
+#gunzip -c results/01-qc/porechop/zymo_long.porechop.fastq.gz | \
+#    chopper --quality 8 --minlength 1000 --threads 8 | \
+#    gzip > results/01-qc/filtered/zymo_long.chopper.fastq.gz
+
 # Option C: Nanoq; fast filtering with JSON statistics (uncomment to use)
 # source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || \
 #     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
 # conda activate metagenomics
- nanoq \
-     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
-     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
-     --min-len 1000 --min-qual 8 \
-     --report results/01-qc/filtered/zymo_long.nanoq.json
+# nanoq \
+#     --input results/01-qc/porechop/zymo_long.porechop.fastq.gz \
+#     --output results/01-qc/filtered/zymo_long.nanoq.fastq.gz \
+#     --min-len 1000 --min-qual 8 \
+#     --report results/01-qc/filtered/zymo_long.nanoq.json
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/qc_08_filtering.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
@@ -439,8 +474,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=qc_09_longhost
 #SBATCH --partition=batch
 #SBATCH --time=02:00:00
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=60G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/qc_09_longhost_%j.out
 #SBATCH --error=logs/qc_09_longhost_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -462,8 +497,8 @@ module load minimap2 samtools
 minimap2 \
     -ax map-ont \
     $HOST_REF \
-    results/01-qc/filtered/zymo_long.chopper.fastq.gz \
-    -t 8 | \
+    results/01-qc/filtered/zymo_long.filtlong.fastq.gz \
+    -t 16 | \
 samtools view -b -f 4 | \
 samtools fastq - | \
 gzip > results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz
@@ -481,6 +516,7 @@ EOF</code></pre></div>
               <tr><td><code>--bbnorm</code></td><td>false</td><td>Enable BBNorm coverage normalisation</td></tr>
               <tr><td><code>--bbnorm_target</code></td><td>100</td><td>Target coverage depth for BBNorm</td></tr>
               <tr><td><code>--skip_porechop</code></td><td>false</td><td>Skip Porechop_ABI for long reads</td></tr>
+              <tr><td><code>--skip_nanolyse</code></td><td>false</td><td>Skip NanoLyse Lambda phage depletion for long reads</td></tr>
               <tr><td><code>--longreads_min_length</code></td><td>1000</td><td>Minimum long read length after filtering</td></tr>
               <tr><td><code>--longreads_keep_percent</code></td><td>90</td><td>Percentage of best long reads to keep (Filtlong)</td></tr>
             </tbody>
@@ -507,6 +543,8 @@ EOF</code></pre></div>
 │   └── zymo_longNanoStats.txt
 ├── porechop/
 │   └── zymo_long.porechop.fastq.gz
+├── nanolyse/                          (optional)
+│   └── zymo_long.nanolyse.fastq.gz
 ├── filtered/
 │   └── zymo_long.chopper.fastq.gz
 └── long_host_removed/
@@ -535,6 +573,7 @@ EOF</code></pre></div>
               <li><a href="#long-read-qc">Part B: Long Read QC</a></li>
               <li><a href="#step-6-nanoplot">Step 6: NanoPlot</a></li>
               <li><a href="#step-7-porechop">Step 7: Porechop_ABI</a></li>
+              <li><a href="#step-7b-nanolyse">Step 7b: NanoLyse (optional)</a></li>
               <li><a href="#step-8-long-read-filtering">Step 8: Filtering</a></li>
               <li><a href="#step-9-long-read-host-removal">Step 9: Host Removal</a></li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>

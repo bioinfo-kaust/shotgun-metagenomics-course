@@ -174,6 +174,7 @@ mamba install -c conda-forge -c bioconda -y \
   chopper \
   nanoq \
   bigmag \
+  nanolyse \
   porechop_abi
 conda deactivate
 
@@ -189,7 +190,7 @@ conda create -n comebin -c conda-forge -c bioconda comebin -y
 conda activate metagenomics
 pydamage --version && gunc --version && SemiBin2 --version && \
 metaeuk version && chopper --version && nanoq --version && \
-bigmag --version && porechop_abi --version
+bigmag --version && NanoLyse --version && porechop_abi --version
 conda deactivate
 conda run -n tiara tiara --version
 conda run -n comebin run_comebin.sh --help 2>&1 | head -1
