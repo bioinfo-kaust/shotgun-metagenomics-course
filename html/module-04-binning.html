@@ -75,7 +75,7 @@
 #SBATCH --job-name=bin_01_coverage_depth
 #SBATCH --partition=batch
 #SBATCH --time=00:30:00
-#SBATCH --mem=16G
+#SBATCH --mem=64G
 #SBATCH --cpus-per-task=4
 #SBATCH --output=logs/bin_01_coverage_depth_%j.out
 #SBATCH --error=logs/bin_01_coverage_depth_%j.err
@@ -104,12 +104,13 @@ EOF</code></pre></div>
 #SBATCH --job-name=bin_02_tiara
 #SBATCH --partition=batch
 #SBATCH --time=00:30:00
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=16
 #SBATCH --output=logs/bin_02_tiara_%j.out
 #SBATCH --error=logs/bin_02_tiara_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=<YOUR_EMAIL>
+#SBATCH --export=NONE
 
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
@@ -125,7 +126,7 @@ conda activate tiara
 tiara \
     -i results/02-assembly/megahit/mock_control.contigs.fa \
     -o results/04-binning/tiara/mock_control.tiara.txt \
-    --threads 4 \
+    --threads 16 \
     --probabilities
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/bin_02_tiara.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
@@ -146,8 +147,8 @@ EOF</code></pre></div>
 #SBATCH --job-name=bin_03_metabat2
 #SBATCH --partition=batch
 #SBATCH --time=01:00:00
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=8
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=64
 #SBATCH --output=logs/bin_03_metabat2_%j.out
 #SBATCH --error=logs/bin_03_metabat2_%j.err
 #SBATCH --mail-type=END,FAIL
@@ -167,7 +168,7 @@ metabat2 \
     -a results/04-binning/coverage/mock_control.depth.txt \
     -o results/04-binning/metabat2/bin \
     --minContig 2000 \
-    --numThreads 8 \
+    --numThreads 64 \
     --saveCls
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/bin_03_metabat2.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
@@ -278,6 +279,10 @@ set -euo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/comebin
 
+# must set this variables to avoid conda activtation failure due to unset variables
+export MKL_INTERFACE_LAYER=LP64
+export MKL_THREADING_LAYER=GNU
+
 source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
 conda activate comebin
@@ -334,7 +339,7 @@ EOF</code></pre></div>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
           <pre><code>echo "MetaBAT2:  $(ls results/04-binning/metabat2/bin.*.fa 2>/dev/null | wc -l) bins"
 echo "MaxBin2:   $(ls results/04-binning/maxbin2/bin.*.fasta 2>/dev/null | wc -l) bins"
-echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa 2>/dev/null | wc -l) bins"</code></pre></div>
+echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/null | wc -l) bins"</code></pre></div>
 
           <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
           <table>
