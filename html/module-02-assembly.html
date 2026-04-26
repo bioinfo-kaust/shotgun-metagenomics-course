@@ -45,6 +45,7 @@
           <h2 id="learning-objectives">Learning Objectives</h2>
           <ul>
             <li>Assemble short reads with MEGAHIT and metaSPAdes and compare results</li>
+            <li>Co-assemble reads from multiple samples with MEGAHIT and understand when this improves binning</li>
             <li>Assemble long reads with Flye and metaMDBG</li>
             <li>Perform hybrid assembly combining short and long reads with SPAdes</li>
             <li>Evaluate assembly quality with QUAST and ALE</li>
@@ -115,6 +116,49 @@ megahit \
     -t 16
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/asm_01_megahit.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-1b-coassembly">Step 1b: Co-assembly with MEGAHIT (mock_control + mock_ss90)</h3>
+          <p>Co-assembly combines reads from both samples into a single assembly. Because <code>mock_control</code> has full microbial depth and <code>mock_ss90</code> has only ~10% microbial reads (after 90% host removal), mapping each sample back to the co-assembly produces two distinct coverage profiles per contig. Binners use this differential coverage to separate genomes that would be indistinguishable from a single coverage signal.</p>
+
+          <div class="callout callout-note">
+            <strong>Why co-assembly improves MAG recovery here</strong>
+            Both samples share the same mock community, so there is no risk of chimeric contigs from strain-level variation — the ideal case for co-assembly. In Module 4 you will bin the co-assembly using per-sample coverage from both samples and compare MAG completeness against the per-sample MEGAHIT result.
+          </div>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/asm_01b_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_01b_coassembly
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_01b_coassembly_%j.out
+#SBATCH --error=logs/asm_01b_coassembly_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/megahit_coassembly
+
+module load megahit
+
+# Comma-separated lists — MEGAHIT pools reads from both samples internally
+megahit \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz,results/01-qc/bbnorm/mock_ss90_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz,results/01-qc/bbnorm/mock_ss90_2.norm.fastq.gz \
+    --out-dir results/02-assembly/megahit_coassembly \
+    --out-prefix coassembly \
+    --min-contig-len 500 \
+    -t 16
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_01b_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <div class="callout callout-warning">
+            <strong>Coverage mapping for co-assembly binning</strong>
+            After co-assembly, map <strong>each sample separately</strong> back to the co-assembly FASTA (Step 8). This produces two BAM files — one per sample — giving binners the differential coverage signal they need. Mapping only one sample defeats the purpose of co-assembly.
+          </div>
 
           <h3 id="step-2-metaspades">Step 2: Assemble with metaSPAdes</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -283,10 +327,11 @@ module load quast
 quast.py \
     results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/metaspades/scaffolds.fasta \
+    results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
     --output-dir results/02-assembly/quast \
     --min-contig 500 \
     --threads 16 \
-    --labels "MEGAHIT,metaSPAdes"
+    --labels "MEGAHIT,metaSPAdes,MEGAHIT-coassembly"
 
 EOF</code></pre></div>
   <p>Submit: <code>sbatch scripts/asm_06_quast.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
@@ -382,6 +427,52 @@ samtools coverage results/02-assembly/coverage/mock_control.sorted.bam \
     > results/02-assembly/coverage/mock_control.coverage.tsv
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/asm_08_bowtie2_coverage.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-8b-coassembly-coverage">Step 8b: Per-sample Coverage Mapping for Co-assembly</h3>
+          <p>Map each sample's reads separately back to the co-assembly to generate two BAM files. The differential coverage between <code>mock_control</code> (high microbial depth) and <code>mock_ss90</code> (low microbial depth after host removal) is the key signal that binners will use in Module 4.</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/asm_08b_coassembly_coverage.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=asm_08b_coassembly_cov
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=16
+#SBATCH --output=logs/asm_08b_coassembly_cov_%j.out
+#SBATCH --error=logs/asm_08b_coassembly_cov_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/02-assembly/coverage/coassembly
+
+module load bowtie2 samtools
+
+# Build index once from the co-assembly
+bowtie2-build \
+    results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    results/02-assembly/coverage/coassembly_idx
+
+# Map mock_control reads
+bowtie2 \
+    -x results/02-assembly/coverage/coassembly_idx \
+    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -p 14 | \
+samtools sort -@2 -o results/02-assembly/coverage/coassembly/mock_control.sorted.bam
+samtools index results/02-assembly/coverage/coassembly/mock_control.sorted.bam
+
+# Map mock_ss90 reads
+bowtie2 \
+    -x results/02-assembly/coverage/coassembly_idx \
+    -1 results/01-qc/bbnorm/mock_ss90_1.norm.fastq.gz \
+    -2 results/01-qc/bbnorm/mock_ss90_2.norm.fastq.gz \
+    -p 14 | \
+samtools sort -@2 -o results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam
+samtools index results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/asm_08b_coassembly_coverage.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
           <h3 id="step-9-minimap2-coverage">Step 9: Map Long Reads for Coverage (Minimap2)</h3>
           <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -499,9 +590,14 @@ EOF</code></pre></div>
 │   └── assembly.fasta
 ├── quast/
 │   └── report.html
+├── megahit_coassembly/
+│   └── coassembly.contigs.fa
 ├── coverage/
 │   ├── mock_control.sorted.bam
-│   └── mock_control.coverage.tsv
+│   ├── mock_control.coverage.tsv
+│   └── coassembly/
+│       ├── mock_control.sorted.bam
+│       └── mock_ss90.sorted.bam
 ├── prodigal/
 │   ├── predicted_proteins.faa
 │   └── predicted.gff
@@ -526,6 +622,7 @@ EOF</code></pre></div>
               <li><a href="#tools">Tools</a></li>
               <li><a href="#short-read-assembly">Part A: Short Read Assembly</a></li>
               <li><a href="#step-1-megahit">Step 1: MEGAHIT</a></li>
+              <li><a href="#step-1b-coassembly">Step 1b: Co-assembly</a></li>
               <li><a href="#step-2-metaspades">Step 2: metaSPAdes</a></li>
               <li><a href="#step-3-hybrid-assembly">Step 3: Hybrid SPAdes</a></li>
               <li><a href="#long-read-assembly">Part B: Long Read Assembly</a></li>
@@ -535,7 +632,8 @@ EOF</code></pre></div>
               <li><a href="#step-6-quast">Step 6: QUAST</a></li>
               <li><a href="#step-7-ale">Step 7: ALE</a></li>
               <li><a href="#coverage-mapping">Part D: Coverage Mapping</a></li>
-              <li><a href="#step-8-bowtie2-coverage">Step 8: Bowtie2</a></li>
+              <li><a href="#step-8-bowtie2-coverage">Step 8: Bowtie2 (per-sample)</a></li>
+              <li><a href="#step-8b-coassembly-coverage">Step 8b: Bowtie2 (co-assembly)</a></li>
               <li><a href="#step-9-minimap2-coverage">Step 9: Minimap2</a></li>
               <li><a href="#contig-annotation">Part E: Annotation</a></li>
               <li><a href="#step-10-prodigal">Step 10: Prodigal</a></li>

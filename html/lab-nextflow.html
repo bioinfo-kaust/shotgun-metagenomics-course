@@ -95,7 +95,7 @@ nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | less</code></pre></div>
               <tr><td>Binning</td><td><code>--skip_comebin</code>, <code>--skip_semibin</code></td><td>Module 4</td></tr>
               <tr><td>Bin refinement</td><td><code>--das_tool_score_threshold</code></td><td>Module 5</td></tr>
               <tr><td>Bin QC</td><td><code>--checkm2_db</code>, <code>--skip_gunc</code></td><td>Module 6</td></tr>
-              <tr><td>Taxonomy</td><td><code>--gtdbtk_db</code>, <code>--cat_db</code></td><td>Module 7</td></tr>
+              <tr><td>Taxonomy</td><td><code>--gtdb_db</code>, <code>--cat_db</code></td><td>Module 7</td></tr>
             </tbody>
           </table>
 
@@ -179,7 +179,7 @@ nextflow run nf-core/mag -resume \
     --genomad_db /ibex/reference/KSL/genomad/v1.5/genomad_db \
     --skip_gunc false --gunc_save_db true \
     --checkm2_db /ibex/sw/rl9c/checkm2/1.0.2/rl9_conda3/database/CheckM2_database/uniref100.KO.1.dmnd \
-    --gtdbtk_db /ibex/reference/KSL/gtdb-tk/release226/ \
+    --gtdb_db /ibex/reference/KSL/gtdb-tk/release226/ \
     --coassemble_group false --prokka_compliance_centre \
     --refine_bins_dastool true --postbinning_input both \
     --generate_bigmag_file true \

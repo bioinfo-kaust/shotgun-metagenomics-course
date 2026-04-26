@@ -49,6 +49,7 @@
             <li>Run MetaBAT2, MaxBin2, CONCOCT, COMEBin, and SemiBin2</li>
             <li>Classify contigs by domain (Bacteria, Archaea, Eukaryota, Virus) with Tiara before binning</li>
             <li>Compare bin sets from different binners to inform DAS Tool refinement</li>
+            <li>Bin a co-assembly using differential coverage from two samples and compare MAG recovery against per-sample binning</li>
           </ul>
 
           <h2 id="background">Background</h2>
@@ -66,6 +67,9 @@
               <tr><td><a href="https://github.com/sszymanska/Tiara" target="_blank" rel="noopener">Tiara</a></td><td>Deep-learning domain classification of contigs</td><td><code>--skip_tiara false</code></td></tr>
             </tbody>
           </table>
+
+          <h2 id="part-a-per-sample">Part A: Per-sample Binning (mock_control)</h2>
+          <p>Steps 1–8 bin the single-sample MEGAHIT assembly of <code>mock_control</code> using one coverage profile. This is the baseline you will compare against co-assembly binning in Part B.</p>
 
           <h2 id="prepare-coverage">Step 1: Prepare Coverage Depth File</h2>
           <p>Most binners require a depth file derived from the BAM alignment generated in Module 2:</p>
@@ -341,6 +345,242 @@ EOF</code></pre></div>
 echo "MaxBin2:   $(ls results/04-binning/maxbin2/bin.*.fasta 2>/dev/null | wc -l) bins"
 echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/null | wc -l) bins"</code></pre></div>
 
+          <h2 id="part-b-coassembly">Part B: Co-assembly Binning (mock_control + mock_ss90)</h2>
+          <p>Here you bin the co-assembly from Module 2 using coverage from <strong>both samples</strong>. Each binner receives a multi-sample depth file that encodes the differential coverage signal — <code>mock_control</code> at full microbial depth, <code>mock_ss90</code> at ~10× lower microbial depth after host removal. This differential is the key signal that lets binners resolve genomes that single-sample coverage cannot separate.</p>
+
+          <h3 id="step-9-coassembly-depth">Step 9: Multi-sample Coverage Depth for Co-assembly</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_09_coassembly_depth.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_09_coasm_depth
+#SBATCH --partition=batch
+#SBATCH --time=00:30:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=4
+#SBATCH --output=logs/bin_09_coasm_depth_%j.out
+#SBATCH --error=logs/bin_09_coasm_depth_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+
+module load metabat
+
+# Passing both BAMs produces a depth file with two coverage columns —
+# one per sample — which binners use as differential coverage signal
+jgi_summarize_bam_contig_depths \
+    --outputDepth results/04-binning/coverage/coassembly.depth.txt \
+    results/02-assembly/coverage/coassembly/mock_control.sorted.bam \
+    results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam
+
+# Also extract per-sample abundance files for MaxBin2
+awk 'NR>1 {print $1"\t"$4}' results/04-binning/coverage/coassembly.depth.txt \
+    > results/04-binning/coverage/coassembly_mock_control.abund.txt
+awk 'NR>1 {print $1"\t"$6}' results/04-binning/coverage/coassembly.depth.txt \
+    > results/04-binning/coverage/coassembly_mock_ss90.abund.txt
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_09_coassembly_depth.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-10-metabat2-coassembly">Step 10: MetaBAT2 (co-assembly)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_10_metabat2_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_10_metabat2_coasm
+#SBATCH --partition=batch
+#SBATCH --time=01:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=64
+#SBATCH --output=logs/bin_10_metabat2_coasm_%j.out
+#SBATCH --error=logs/bin_10_metabat2_coasm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/04-binning/metabat2_coassembly
+
+module load metabat
+
+metabat2 \
+    -i results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    -a results/04-binning/coverage/coassembly.depth.txt \
+    -o results/04-binning/metabat2_coassembly/bin \
+    --minContig 2000 \
+    --numThreads 64 \
+    --saveCls
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_10_metabat2_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-11-maxbin2-coassembly">Step 11: MaxBin2 (co-assembly)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_11_maxbin2_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_11_maxbin2_coasm
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/bin_11_maxbin2_coasm_%j.out
+#SBATCH --error=logs/bin_11_maxbin2_coasm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/04-binning/maxbin2_coassembly
+
+module load maxbin
+
+# Write the per-sample abundance list for multi-sample mode
+printf '%s\n' \
+    results/04-binning/coverage/coassembly_mock_control.abund.txt \
+    results/04-binning/coverage/coassembly_mock_ss90.abund.txt \
+    > results/04-binning/coverage/coassembly_abund_list.txt
+
+run_MaxBin.pl \
+    -contig results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    -abund_list results/04-binning/coverage/coassembly_abund_list.txt \
+    -out results/04-binning/maxbin2_coassembly/bin \
+    -min_contig_length 2000 \
+    -thread 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_11_maxbin2_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-12-concoct-coassembly">Step 12: CONCOCT (co-assembly)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_12_concoct_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_12_concoct_coasm
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/bin_12_concoct_coasm_%j.out
+#SBATCH --error=logs/bin_12_concoct_coasm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/04-binning/concoct_coassembly/{cut_contigs,output,bins}
+
+module load concoct
+
+cut_up_fasta.py \
+    results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    -c 10000 -o 0 --merge_last \
+    -b results/04-binning/concoct_coassembly/cut_contigs/coassembly.bed \
+    > results/04-binning/concoct_coassembly/cut_contigs/coassembly.cut.fa
+
+# Both BAMs passed — CONCOCT builds a multi-sample coverage table
+concoct_coverage_table.py \
+    results/04-binning/concoct_coassembly/cut_contigs/coassembly.bed \
+    results/02-assembly/coverage/coassembly/mock_control.sorted.bam \
+    results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam \
+    > results/04-binning/concoct_coassembly/output/coverage_table.tsv
+
+concoct \
+    --composition_file results/04-binning/concoct_coassembly/cut_contigs/coassembly.cut.fa \
+    --coverage_file results/04-binning/concoct_coassembly/output/coverage_table.tsv \
+    -b results/04-binning/concoct_coassembly/output/ \
+    --threads 8
+
+merge_cutup_clustering.py \
+    results/04-binning/concoct_coassembly/output/clustering_gt1000.csv \
+    > results/04-binning/concoct_coassembly/output/clustering_merged.csv
+
+extract_fasta_bins.py \
+    results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    results/04-binning/concoct_coassembly/output/clustering_merged.csv \
+    --output_path results/04-binning/concoct_coassembly/bins/
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_12_concoct_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-13-comebin-coassembly">Step 13: COMEBin (co-assembly)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_13_comebin_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_13_comebin_coasm
+#SBATCH --partition=batch
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/bin_13_comebin_coasm_%j.out
+#SBATCH --error=logs/bin_13_comebin_coasm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/04-binning/comebin_coassembly
+
+export MKL_INTERFACE_LAYER=LP64
+export MKL_THREADING_LAYER=GNU
+
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate comebin
+
+# -p points to the directory containing both co-assembly BAMs
+run_comebin.sh \
+    -a results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    -o results/04-binning/comebin_coassembly \
+    -p results/02-assembly/coverage/coassembly/ \
+    -t 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_13_comebin_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-14-semibin2-coassembly">Step 14: SemiBin2 multi-sample (co-assembly)</h3>
+          <p>For co-assembly, use <code>multi_easy_bin</code> — SemiBin2 learns from both samples jointly without requiring a preset environment model.</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > scripts/bin_14_semibin2_coassembly.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=bin_14_semibin2_coasm
+#SBATCH --partition=batch
+#SBATCH --time=04:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+#SBATCH --output=logs/bin_14_semibin2_coasm_%j.out
+#SBATCH --error=logs/bin_14_semibin2_coasm_%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
+
+set -euo pipefail
+cd /ibex/user/$USER/metagenomics_course
+mkdir -p results/04-binning/semibin2_coassembly
+
+source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
+    source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
+conda activate metagenomics
+
+SemiBin2 multi_easy_bin \
+    -i results/02-assembly/megahit_coassembly/coassembly.contigs.fa \
+    -b results/02-assembly/coverage/coassembly/mock_control.sorted.bam \
+       results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam \
+    -o results/04-binning/semibin2_coassembly \
+    --threads 8
+EOF</code></pre></div>
+          <p>Submit: <code>sbatch scripts/bin_14_semibin2_coassembly.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
+
+          <h3 id="step-15-coassembly-bin-count">Step 15: Count Co-assembly Bins</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>echo "=== Co-assembly bins ==="
+echo "MetaBAT2:  $(ls results/04-binning/metabat2_coassembly/bin.*.fa 2>/dev/null | wc -l) bins"
+echo "MaxBin2:   $(ls results/04-binning/maxbin2_coassembly/bin.*.fasta 2>/dev/null | wc -l) bins"
+echo "SemiBin2:  $(ls results/04-binning/semibin2_coassembly/output_recluster_bins/*.fa.gz 2>/dev/null | wc -l) bins"
+
+echo ""
+echo "=== Per-sample bins (Part A, for comparison) ==="
+echo "MetaBAT2:  $(ls results/04-binning/metabat2/bin.*.fa 2>/dev/null | wc -l) bins"
+echo "MaxBin2:   $(ls results/04-binning/maxbin2/bin.*.fasta 2>/dev/null | wc -l) bins"
+echo "SemiBin2:  $(ls results/04-binning/semibin2/output_recluster_bins/*.fa.gz 2>/dev/null | wc -l) bins"</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>What to expect from the comparison</strong>
+            Because both samples come from the same mock community, the co-assembly should produce contigs with better read support than either sample alone. The differential coverage signal (mock_control at full depth vs. mock_ss90 at ~10% microbial depth) gives binners a second axis to separate genomes. In Module 5 (DAS Tool) and Module 6 (CheckM2/GUNC), you will see whether co-assembly bins are more complete and whether any additional MAGs are recovered that the per-sample approach missed.
+          </div>
+
           <h2 id="nf-core-parameters">Key nf-core/mag Parameters</h2>
           <table>
             <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
@@ -359,7 +599,10 @@ echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/nul
           <h2 id="expected-output">Expected Output</h2>
           <pre><code>results/04-binning/
 ├── coverage/
-│   └── mock_control.depth.txt
+│   ├── mock_control.depth.txt
+│   ├── coassembly.depth.txt
+│   ├── coassembly_mock_control.abund.txt
+│   └── coassembly_mock_ss90.abund.txt
 ├── tiara/
 │   └── mock_control.tiara.txt
 ├── metabat2/
@@ -371,7 +614,17 @@ echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/nul
 │   └── bins/
 ├── comebin/
 │   └── comebin_res/
-└── semibin2/
+├── semibin2/
+│   └── output_bins/
+├── metabat2_coassembly/
+│   └── bin.1.fa
+├── maxbin2_coassembly/
+│   └── bin.001.fasta
+├── concoct_coassembly/
+│   └── bins/
+├── comebin_coassembly/
+│   └── comebin_res/
+└── semibin2_coassembly/
     └── output_bins/</code></pre>
 
           <div style="display:flex; gap:1rem; margin-top:3rem;">
@@ -388,14 +641,29 @@ echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/nul
               <li><a href="#learning-objectives">Learning Objectives</a></li>
               <li><a href="#background">Background</a></li>
               <li><a href="#tools">Tools</a></li>
-              <li><a href="#prepare-coverage">Step 1: Coverage Depth</a></li>
-              <li><a href="#tiara-classification">Step 2: Tiara</a></li>
-              <li><a href="#metabat2">Step 3: MetaBAT2</a></li>
-              <li><a href="#maxbin2">Step 4: MaxBin2</a></li>
-              <li><a href="#concoct">Step 5: CONCOCT</a></li>
-              <li><a href="#comebin">Step 6: COMEBin</a></li>
-              <li><a href="#semibin2">Step 7: SemiBin2</a></li>
-              <li><a href="#bin-summary">Step 8: Count Bins</a></li>
+              <li><strong>Part A: Per-sample Binning</strong>
+                <ul style="margin-top:0.3rem;">
+                  <li><a href="#prepare-coverage">Step 1: Coverage Depth</a></li>
+                  <li><a href="#tiara-classification">Step 2: Tiara</a></li>
+                  <li><a href="#metabat2">Step 3: MetaBAT2</a></li>
+                  <li><a href="#maxbin2">Step 4: MaxBin2</a></li>
+                  <li><a href="#concoct">Step 5: CONCOCT</a></li>
+                  <li><a href="#comebin">Step 6: COMEBin</a></li>
+                  <li><a href="#semibin2">Step 7: SemiBin2</a></li>
+                  <li><a href="#bin-summary">Step 8: Count Bins</a></li>
+                </ul>
+              </li>
+              <li><strong>Part B: Co-assembly Binning</strong>
+                <ul style="margin-top:0.3rem;">
+                  <li><a href="#step-9-coassembly-depth">Step 9: Multi-sample Depth</a></li>
+                  <li><a href="#step-10-metabat2-coassembly">Step 10: MetaBAT2</a></li>
+                  <li><a href="#step-11-maxbin2-coassembly">Step 11: MaxBin2</a></li>
+                  <li><a href="#step-12-concoct-coassembly">Step 12: CONCOCT</a></li>
+                  <li><a href="#step-13-comebin-coassembly">Step 13: COMEBin</a></li>
+                  <li><a href="#step-14-semibin2-coassembly">Step 14: SemiBin2</a></li>
+                  <li><a href="#step-15-coassembly-bin-count">Step 15: Count Bins</a></li>
+                </ul>
+              </li>
               <li><a href="#nf-core-parameters">nf-core/mag Parameters</a></li>
               <li><a href="#expected-output">Expected Output</a></li>
             </ul>
