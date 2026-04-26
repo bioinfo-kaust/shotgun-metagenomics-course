@@ -3,5 +3,5 @@ site/
 __pycache__/
 *.pyc
 .DS_Store
-CLAUDE.mdslides/
+slides/
 CLAUDE.md

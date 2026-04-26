@@ -71,28 +71,30 @@ cd /ibex/user/$USER/metagenomics_course
 
 module load das_tool
 
+DAS_app=$(dirname $(which DAS_Tool))
+
 mkdir -p results/05-refinement/scaffold_lists
 
 # MetaBAT2
-Fasta_to_Scaffolds2Bin.sh \
+bash ${DAS_app}/src/Fasta_to_Contig2Bin.sh \
     -i results/04-binning/metabat2/ \
     -e fa \
     > results/05-refinement/scaffold_lists/metabat2.tsv
 
 # MaxBin2
-Fasta_to_Scaffolds2Bin.sh \
+bash ${DAS_app}/src/Fasta_to_Contig2Bin.sh \
     -i results/04-binning/maxbin2/ \
     -e fasta \
     > results/05-refinement/scaffold_lists/maxbin2.tsv
 
 # CONCOCT
-Fasta_to_Scaffolds2Bin.sh \
+bash ${DAS_app}/src/Fasta_to_Contig2Bin.sh \
     -i results/04-binning/concoct/bins/ \
     -e fa \
     > results/05-refinement/scaffold_lists/concoct.tsv
 
 # SemiBin2
-Fasta_to_Scaffolds2Bin.sh \
+bash ${DAS_app}/src/Fasta_to_Contig2Bin.sh \
     -i results/04-binning/semibin2/output_bins/ \
     -e fa \
     > results/05-refinement/scaffold_lists/semibin2.tsv</code></pre></div>
