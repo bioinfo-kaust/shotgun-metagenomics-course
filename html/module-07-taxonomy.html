@@ -95,7 +95,7 @@ gtdbtk classify_wf \
     --out_dir results/07-taxonomy/gtdbtk \
     --extension fa \
     --cpus 16 \
-    --mash_db /ibex/project/c2xxx/databases/gtdbtk_db
+    --mash_db /ibex/reference/KSL/gtdb-tk/release226/
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/tax_01_gtdbtk.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
@@ -256,7 +256,7 @@ column -t -s$'\t' \
             <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
             <tbody>
               <tr><td><code>--skip_gtdbtk</code></td><td>false</td><td>Skip GTDB-Tk classification</td></tr>
-              <tr><td><code>--gtdbtk_db</code></td><td>-</td><td>Path to GTDB-Tk reference data</td></tr>
+              <tr><td><code>--gtdb_db</code></td><td>-</td><td>Path to GTDB-Tk reference data</td></tr>
               <tr><td><code>--gtdbtk_pplacer_cpus</code></td><td>1</td><td>CPUs for pplacer placement step</td></tr>
               <tr><td><code>--skip_cat</code></td><td>false</td><td>Skip CAT annotation</td></tr>
               <tr><td><code>--cat_db</code></td><td>-</td><td>Path to CAT database</td></tr>
