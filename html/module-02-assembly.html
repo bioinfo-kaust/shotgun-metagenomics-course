@@ -101,7 +101,7 @@ mkdir -p scripts logs</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/
 
@@ -138,7 +138,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/
 
@@ -177,7 +177,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/metaspades
 
@@ -210,7 +210,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/hybrid
 
@@ -246,7 +246,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/flye
 
@@ -282,7 +282,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/metamdbg
 
@@ -317,7 +317,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 mkdir -p results/02-assembly/quast
@@ -354,7 +354,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/ale
 
@@ -405,7 +405,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/coverage
 
@@ -443,7 +443,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 
@@ -491,7 +491,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 module load minimap2 samtools
@@ -545,7 +545,7 @@ prodigal \
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/02-assembly/genomad
 
