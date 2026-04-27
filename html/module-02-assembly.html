@@ -108,8 +108,8 @@ mkdir -p results/02-assembly/
 module load megahit
 
 megahit \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     --out-dir results/02-assembly/megahit \
     --out-prefix mock_control \
     --min-contig-len 500 \
@@ -146,8 +146,8 @@ module load megahit
 
 # Comma-separated lists — MEGAHIT pools reads from both samples internally
 megahit \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz,results/01-qc/bbnorm/mock_ss90_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz,results/01-qc/bbnorm/mock_ss90_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz,results/01-qc/host_removal/mock_ss90_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz,results/01-qc/host_removal/mock_ss90_2.host_removed.fastq.gz \
     --out-dir results/02-assembly/megahit_coassembly \
     --out-prefix coassembly \
     --min-contig-len 500 \
@@ -185,8 +185,8 @@ module load spades
 
 spades.py \
     --meta \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     -o results/02-assembly/metaspades \
     --threads 16 \
     --memory 128
@@ -218,8 +218,8 @@ module load spades
 
 spades.py \
     --meta \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     --nanopore results/01-qc/long_host_removed/zymo_long.decontam.fastq.gz \
     -o results/02-assembly/hybrid \
     --threads 16 \
@@ -366,8 +366,8 @@ bowtie2-build \
 
 bowtie2 \
     -x results/02-assembly/ale/megahit_idx \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     -p 26 | \
 samtools sort -@6 -o results/02-assembly/ale/megahit.sorted.bam
 samtools index results/02-assembly/ale/megahit.sorted.bam
@@ -417,8 +417,8 @@ bowtie2-build \
 
 bowtie2 \
     -x results/02-assembly/coverage/assembly_idx \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     -p 26 | \
 samtools sort -@6 -o results/02-assembly/coverage/mock_control.sorted.bam
 samtools index results/02-assembly/coverage/mock_control.sorted.bam
@@ -457,8 +457,8 @@ bowtie2-build \
 # Map mock_control reads
 bowtie2 \
     -x results/02-assembly/coverage/coassembly_idx \
-    -1 results/01-qc/bbnorm/mock_control_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_control_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_control_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_control_2.host_removed.fastq.gz \
     -p 14 | \
 samtools sort -@2 -o results/02-assembly/coverage/coassembly/mock_control.sorted.bam
 samtools index results/02-assembly/coverage/coassembly/mock_control.sorted.bam
@@ -466,8 +466,8 @@ samtools index results/02-assembly/coverage/coassembly/mock_control.sorted.bam
 # Map mock_ss90 reads
 bowtie2 \
     -x results/02-assembly/coverage/coassembly_idx \
-    -1 results/01-qc/bbnorm/mock_ss90_1.norm.fastq.gz \
-    -2 results/01-qc/bbnorm/mock_ss90_2.norm.fastq.gz \
+    -1 results/01-qc/host_removal/mock_ss90_1.host_removed.fastq.gz \
+    -2 results/01-qc/host_removal/mock_ss90_2.host_removed.fastq.gz \
     -p 14 | \
 samtools sort -@2 -o results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam
 samtools index results/02-assembly/coverage/coassembly/mock_ss90.sorted.bam
