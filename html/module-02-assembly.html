@@ -378,7 +378,7 @@ source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null ||\
     source /ibex/user/$USER/miniforge3/etc/profile.d/conda.sh
 conda activate metagenomics
 
-ALE \
+/biocorelab/BIX/resources/training/2026/metagenomics/apps/ALE/src/ALE \
     results/02-assembly/ale/megahit.sorted.bam \
     results/02-assembly/megahit/mock_control.contigs.fa \
     results/02-assembly/ale/megahit.ale
