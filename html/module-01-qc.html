@@ -109,7 +109,7 @@ mkdir -p scripts logs</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/fastqc_raw
 
@@ -139,7 +139,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/fastp
 
@@ -181,7 +181,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/host_removal db/host_index
 
@@ -248,7 +248,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 PHIX_URL="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/596/845/GCA_002596845.1_ASM259684v1/GCA_002596845.1_ASM259684v1_genomic.fna.gz"
@@ -291,7 +291,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/bbnorm
 
@@ -334,7 +334,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/nanoplot
 
@@ -366,7 +366,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/porechop
 
@@ -402,7 +402,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/nanolyse
 
@@ -434,7 +434,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/filtered
 
@@ -484,7 +484,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/01-qc/long_host_removed
 
