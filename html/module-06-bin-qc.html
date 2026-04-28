@@ -95,7 +95,7 @@ module load checkm2
 checkm2 predict \
     --input results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --output-directory results/06-bin-qc/checkm2 \
-    --database_path /ibex/project/c2xxx/databases/checkm2_db/uniref100.KO.1.dmnd \
+    --database_path /biocorelab/BIX/resources/databases/CheckM2_database/uniref100.KO.1.dmnd \
     --extension fa \
     --threads 8
 EOF</code></pre></div>
@@ -173,8 +173,7 @@ for bin in results/05-refinement/das_tool/mock_control_DASTool_bins/*.fa; do
         -o "results/06-bin-qc/busco/$name" \
         -m genome \
         -l bacteria_odb10 \
-        -c 8 \
-        --offline
+        -c 8
 done
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/binqc_03_busco.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
