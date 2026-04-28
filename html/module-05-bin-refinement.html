@@ -116,7 +116,7 @@ bash ${DAS_app}/src/Fasta_to_Contig2Bin.sh \
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/05-refinement/das_tool
 

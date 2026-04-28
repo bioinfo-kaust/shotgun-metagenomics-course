@@ -89,7 +89,7 @@
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/coverage
 
@@ -119,7 +119,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/tiara
 
@@ -161,7 +161,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/metabat2
 
@@ -194,7 +194,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/maxbin2
 
@@ -226,7 +226,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/concoct/cut_contigs
 mkdir -p results/04-binning/concoct/output
@@ -279,7 +279,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/comebin
 
@@ -316,7 +316,7 @@ EOF</code></pre></div>
 # Exit immediately on error (-e), treat unset variables as errors (-u),
 # and propagate pipe failures (-o pipefail) so the job stops at the first
 # sign of trouble rather than silently continuing with bad data.
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/semibin2
 
@@ -362,7 +362,7 @@ echo "SemiBin2:  $(ls results/04-binning/semibin2/output_bins/*.fa.gz 2>/dev/nul
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 module load metabat
@@ -396,7 +396,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/metabat2_coassembly
 
@@ -426,7 +426,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/maxbin2_coassembly
 
@@ -461,7 +461,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/concoct_coassembly/{cut_contigs,output,bins}
 
@@ -511,7 +511,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/comebin_coassembly
 
@@ -546,7 +546,7 @@ EOF</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 mkdir -p results/04-binning/semibin2_coassembly
 

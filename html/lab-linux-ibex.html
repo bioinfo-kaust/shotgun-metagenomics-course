@@ -296,7 +296,7 @@ conda deactivate</code></pre></div>
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=&lt;YOUR_EMAIL&gt;
 
-set -euo pipefail
+set -eo pipefail
 cd /ibex/user/$USER/metagenomics_course
 
 # For Ibex module tools:
