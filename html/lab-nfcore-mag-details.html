@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>nf-core/mag: Technical Deep-Dive | Metagenomics Course</title>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+  <script>function copyCode(btn){const pre=btn.parentElement.querySelector('code');navigator.clipboard.writeText(pre.innerText);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <a href="../index.html" class="logo">Metagenomics Course</a>
+    <ul>
+      <li><a href="../index.html">Overview</a></li>
+      <li><a href="schedule.html" class="active">Schedule</a></li>
+      <li><a href="modules.html">Modules</a></li>
+      <li><a href="setup.html">Setup</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="https://github.com/bioinfo-kaust/shotgun-metagenomics-course" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display:flex;align-items:center;color:var(--color-text);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="module-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="schedule.html">Schedule</a> &rsaquo; Day 4</div>
+    <span class="module-number">DAY 4, 13:00 &ndash; 16:00</span>
+    <h1>nf-core/mag: Technical Deep-Dive</h1>
+    <p>Explore the workflow internals, navigate output folders and the Nextflow work directory, read log files, troubleshoot common failures, interpret execution reports, and customise resource limits and tool parameters using config files.</p>
+  </div>
+</div>
+
+<main id="main">
+  <section style="padding-top:3rem;">
+    <div class="container">
+      <div class="content-grid">
+        <div class="content-body">
+
+          <h2 id="learning-objectives">Learning Objectives</h2>
+          <ul>
+            <li>Understand how Nextflow executes nf-core/mag processes on Ibex</li>
+            <li>Navigate the output directory tree and the <code>work/</code> directory</li>
+            <li>Read <code>.nextflow.log</code> and per-process log files to diagnose failures</li>
+            <li>Troubleshoot common pipeline errors: OOM kills, missing databases, container failures</li>
+            <li>Generate and interpret HTML execution reports, trace files, and DAG diagrams</li>
+            <li>Override process resources (CPUs, memory, walltime) with a custom config</li>
+            <li>Pass tool-specific arguments to individual pipeline tools via <code>ext.args</code></li>
+          </ul>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="workflow-internals">Workflow Internals</h2>
+          <p>When you run <code>nextflow run nf-core/mag</code>, Nextflow reads the pipeline DSL2 code and builds a directed acyclic graph (DAG) of <strong>processes</strong> connected by <strong>channels</strong>. Each process is a self-contained shell script that is submitted as a separate SLURM job on Ibex. Nextflow tracks dependencies: a binning process only starts once its upstream assembly process has finished and written its output files.</p>
+
+          <table>
+            <thead><tr><th>Concept</th><th>What it means in practice</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Process</strong></td><td>A single tool invocation (e.g. MEGAHIT, MetaBAT2). Gets its own SLURM job, its own <code>work/</code> subdirectory, and its own log files.</td></tr>
+              <tr><td><strong>Channel</strong></td><td>A data stream that connects process outputs to process inputs. Nextflow monitors channels and launches downstream processes as soon as their input is ready.</td></tr>
+              <tr><td><strong>Work directory</strong></td><td>Nextflow creates a unique hash directory under <code>work/</code> for every process execution. All inputs are symlinked there; all outputs are written there.</td></tr>
+              <tr><td><strong>Cache</strong></td><td>On <code>-resume</code>, Nextflow compares inputs, parameters, and container digests. Unchanged processes are skipped and their cached outputs are reused.</td></tr>
+              <tr><td><strong>Profile</strong></td><td>A named set of configuration directives. <code>-profile kaust</code> sets the executor to SLURM, enables Singularity, and points to Ibex scratch storage.</td></tr>
+            </tbody>
+          </table>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="running-workflow">Running the Workflow</h2>
+          <p>The pipeline is always launched from a login node as a SLURM batch script. Nextflow itself uses only a few CPUs and a small amount of memory; the heavy compute happens in the child SLURM jobs it submits. The minimum recommended SLURM allocation for the Nextflow driver process is 4 CPUs / 8 GB RAM.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>cat > run_nfcore_mag.sh << 'EOF'
+#!/bin/bash
+#SBATCH --job-name=nfcore_mag
+#SBATCH --partition=batch
+#SBATCH --time=72:00:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=4
+#SBATCH --output=nfcore_mag_%j.log
+#SBATCH --error=nfcore_mag_%j.err
+
+module load nextflow singularity
+
+nextflow run nf-core/mag \
+    -r 5.4.2 \
+    -profile kaust \
+    -resume \
+    --input samplesheet.csv \
+    --outdir results/ \
+    --host_fasta /ibex/reference/KSL/human/GRCh38/GRCh38.fa \
+    --skip_spades false \
+    --run_virus_identification true \
+    --genomad_db /ibex/reference/KSL/genomad/v1.5/genomad_db \
+    --skip_gunc false \
+    --checkm2_db /ibex/sw/rl9c/checkm2/1.0.2/rl9_conda3/database/CheckM2_database/uniref100.KO.1.dmnd \
+    --gtdb_db /ibex/reference/KSL/gtdb-tk/release226/ \
+    --refine_bins_dastool true \
+    --postbinning_input both \
+    --generate_bigmag_file true \
+    -with-report reports/execution_report.html \
+    -with-trace  reports/trace.tsv \
+    -with-timeline reports/timeline.html
+EOF
+
+mkdir -p reports
+sbatch run_nfcore_mag.sh</code></pre></div>
+
+          <div class="callout callout-tip">
+            <strong>Always use <code>-resume</code></strong>
+            Adding <code>-resume</code> costs nothing on the first run (there is nothing cached yet) and saves hours on every re-run after a partial failure. Make it a habit to always include it.
+          </div>
+
+          <p>After submitting, monitor the driver job and watch the pipeline progress:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Check that the driver job is running
+squeue -u $USER
+
+# Tail the SLURM log for the Nextflow driver
+tail -f nfcore_mag_*.log
+
+# Check all child SLURM jobs submitted by Nextflow
+squeue -u $USER --format="%.18i %.9P %.30j %.8u %.2t %.10M %.6D %R"</code></pre></div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="output-structure">Output Folder Structure</h2>
+          <p>After a successful run you will find two top-level trees: the <strong>results directory</strong> (polished, named outputs) and the <strong>work directory</strong> (raw process sandboxes).</p>
+
+          <h3 id="results-dir">results/ — Final Outputs</h3>
+          <pre><code>results/
+├── pipeline_info/            ← Execution report, trace TSV, software versions YAML
+│   ├── execution_report_*.html
+│   ├── execution_trace_*.txt
+│   ├── pipeline_dag_*.html
+│   └── nf_core_mag_software_mqc_versions.yml
+├── QC_shortreads/
+│   ├── fastp/                ← Adapter-trimmed FASTQs + JSON/HTML per sample
+│   ├── fastqc/               ← FastQC ZIP + HTML (raw and trimmed)
+│   └── remove_host/          ← Bowtie2 stats + host-removed FASTQs
+├── QC_longreads/
+│   ├── nanoplot/             ← NanoPlot HTML reports
+│   └── porechop_abi/         ← Adapter-trimmed long reads
+├── Assembly/
+│   ├── MEGAHIT/              ← final.contigs.fa per sample/group
+│   ├── SPAdes/               ← scaffolds.fasta per sample/group
+│   └── QUAST/                ← Assembly QC report HTML + TSV
+├── Annotation/
+│   ├── Prodigal/             ← Predicted genes (.faa, .gff) per assembly
+│   └── geNomad/              ← Viral/plasmid sequences + scores
+├── Binning/
+│   ├── MetaBAT2/
+│   ├── MaxBin2/
+│   ├── CONCOCT/
+│   ├── COMEBin/
+│   ├── SemiBin2/
+│   ├── Tiara/                ← Contig domain classification TSV
+│   └── DASTool/              ← Refined bins (one FASTA per MAG)
+├── BinQC/
+│   ├── CheckM2/              ← quality_report.tsv (completeness, contamination)
+│   ├── BUSCO/                ← Per-bin BUSCO summary
+│   └── GUNC/                 ← GUNC chimerism assessment TSV
+├── Taxonomy/
+│   ├── GTDB-Tk/              ← gtdbtk.bac120.summary.tsv, gtdbtk.ar53.summary.tsv
+│   ├── CAT/                  ← Contig-level taxonomy
+│   ├── Prokka/               ← Annotated bin GFF/GBK/FAA
+│   └── MetaEuk/              ← Eukaryote gene predictions
+├── GenomeSummary/
+│   └── bin_summary.tsv       ← Combined CheckM2 + GTDB-Tk + MIMAG tier table
+└── multiqc/
+    └── multiqc_report.html   ← Aggregated QC across all samples and tools</code></pre>
+
+          <h3 id="work-dir">work/ — Process Sandboxes</h3>
+          <p>Every process execution gets an isolated subdirectory under <code>work/</code>, named by a two-level hash (e.g. <code>work/3a/f82c19.../</code>). This is where Nextflow stages inputs, runs the tool, and captures outputs before publishing them to <code>results/</code>.</p>
+
+          <pre><code>work/
+└── 3a/
+    └── f82c19d4b7e3a8c10f5b69e2d4f12345/
+        ├── .command.sh       ← The exact shell command that was executed
+        ├── .command.run      ← The SLURM wrapper script submitted to the scheduler
+        ├── .command.log      ← Combined stdout + stderr from the tool
+        ├── .command.out      ← stdout only
+        ├── .command.err      ← stderr only
+        ├── .command.env      ← Environment variables at execution time
+        ├── .exitcode         ← Exit code (0 = success, non-zero = failure)
+        ├── sample.fastq.gz -> /path/to/input  ← Symlinked inputs
+        └── output_file.tsv   ← Actual output written by the tool</code></pre>
+
+          <div class="callout callout-note">
+            <strong>Inputs are always symlinks</strong>
+            Nextflow never copies input files into the work directory — it creates symbolic links. This keeps disk usage low. If you delete the original input files before the pipeline finishes, you will break active symlinks and cause failures.
+          </div>
+
+          <p>To find the work directory for a specific process, search the Nextflow log:</p>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Find work dir for a process by name
+grep -i "GTDBTK" .nextflow.log | grep "work/"
+
+# Or list all work dirs with their process names from the trace file
+awk -F'\t' 'NR>1 {print $8, $1}' reports/trace.tsv | sort | head -40</code></pre></div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="log-files">Navigating Log Files</h2>
+
+          <h3 id="nextflow-log">The .nextflow.log File</h3>
+          <p>Nextflow writes a structured log to <code>.nextflow.log</code> in the launch directory, and rotates previous runs to <code>.nextflow.log.1</code>, <code>.nextflow.log.2</code>, etc. (up to five). This is the first place to look after any failure.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Tail the live log while the pipeline is running
+tail -f .nextflow.log
+
+# Search for errors across the current log
+grep -i "error\|FAILED\|exception" .nextflow.log
+
+# Find which work dir a failed task used
+grep -i "FAILED" .nextflow.log | grep -oP 'work/[a-f0-9]+/[a-f0-9]+'</code></pre></div>
+
+          <p>Key patterns to look for in <code>.nextflow.log</code>:</p>
+          <table>
+            <thead><tr><th>Pattern</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>Task FAILED</code></td><td>A process exited with a non-zero code — check <code>.exitcode</code> and <code>.command.err</code> in its work dir</td></tr>
+              <tr><td><code>Process &gt; ... submitted</code></td><td>A child SLURM job has been submitted for this process</td></tr>
+              <tr><td><code>cached</code></td><td>This process was skipped because its output is already in cache (from a <code>-resume</code> run)</td></tr>
+              <tr><td><code>Workflow completed</code></td><td>All processes finished — look for <code>ERROR</code> just before this to see how many tasks failed</td></tr>
+              <tr><td><code>WARN</code></td><td>Non-fatal issue (e.g. a deprecated parameter) that did not stop the run</td></tr>
+            </tbody>
+          </table>
+
+          <h3 id="process-logs">Per-Process Log Files</h3>
+          <p>Once you have the work directory path for a failed process, inspect its files directly:</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Navigate to the failed process work dir
+cd work/3a/f82c19d4b7e3a8c10f5b69e2d4f12345
+
+# What command was run?
+cat .command.sh
+
+# What did the tool print?
+cat .command.log
+
+# stderr only (most useful for errors)
+cat .command.err
+
+# What was the exit code?
+cat .exitcode
+
+# What environment variables were set?
+grep "PATH\|SINGULARITY\|NXF" .command.env</code></pre></div>
+
+          <h3 id="slurm-log">SLURM Batch Driver Log</h3>
+          <p>The SLURM output file for the Nextflow driver job (<code>nfcore_mag_JOBID.log</code>) contains the Nextflow run summary printed at the end of a successful or failed run:</p>
+
+          <pre><code>N E X T F L O W  ~  version 24.10.2
+
+Launching `https://github.com/nf-core/mag` [jolly_euler] DSL2 - revision: a1b2c3d4e5
+
+executor >  slurm (342)
+[48/9f3c21] process > NFCORE_MAG:MAG:FASTQC_RAW (mock_control)    [100%] 2 of 2 ✔
+[3a/f82c19] process > NFCORE_MAG:MAG:FASTP (mock_control)         [100%] 2 of 2 ✔
+[c7/2d89ab] process > NFCORE_MAG:MAG:MEGAHIT (group1)             [100%] 1 of 1 ✔
+[d2/1e3f7c] process > NFCORE_MAG:MAG:GTDBTK_CLASSIFYWF (bins)    [ 50%] 1 of 2, failed: 1
+...
+ERROR ~ Error executing process › 'NFCORE_MAG:MAG:GTDBTK_CLASSIFYWF (bins)'
+
+Caused by:
+  Process `GTDBTK_CLASSIFYWF` terminated with an error exit status (137)
+
+Work dir:
+  /ibex/user/jdoe/metagenomics_course/nfcore_mag/work/d2/1e3f7c...</code></pre>
+
+          <div class="callout callout-tip">
+            <strong>Exit code 137 means OOM-kill</strong>
+            Linux exit code 137 = 128 + 9 (SIGKILL). The SLURM scheduler killed the process because it exceeded its memory allocation. Increase the memory for that process in your custom config (see <a href="#custom-config">Customising Config</a>).
+          </div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="troubleshooting">Troubleshooting Common Errors</h2>
+
+          <h3 id="error-oom">Out-of-Memory (Exit 137)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># 1. Confirm it is an OOM kill
+cat work/d2/1e3f7c.../.exitcode        # prints: 137
+cat work/d2/1e3f7c.../.command.err     # often empty — kernel killed the process
+
+# 2. Check how much memory the process requested vs used
+grep "GTDBTK" reports/trace.tsv | awk -F'\t' '{print $5, $14, $15}'
+# columns: name, peak_rss, peak_vmem
+
+# 3. Fix: add a withName block in a custom config to increase memory
+#    (see the "Customising Config" section below)</code></pre></div>
+
+          <h3 id="error-timeout">Walltime Exceeded (Exit 140 / DUE_TO_TIME_LIMIT)</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Confirm timeout
+grep "TIME_LIMIT\|DUE_TO_TIME" .nextflow.log
+
+cat work/xx/yyyyyy.../.command.err
+# SLURM: Job XXXXXXX (process: NFCORE_MAG:MAG:MEGAHIT) timed out
+
+# Fix: override time in a custom config
+# process {
+#   withName: 'MEGAHIT' { time = '12.h' }
+# }</code></pre></div>
+
+          <h3 id="error-database">Missing Database File</h3>
+          <pre><code># Symptom in .command.err:
+Error: Database file not found: /path/to/checkm2_db/uniref100.KO.1.dmnd
+
+# Fix: verify the path exists and is readable
+ls -lh /ibex/sw/rl9c/checkm2/1.0.2/rl9_conda3/database/CheckM2_database/uniref100.KO.1.dmnd
+
+# Then correct the --checkm2_db parameter and re-run with -resume</code></pre>
+
+          <h3 id="error-container">Singularity Container Pull Failure</h3>
+          <pre><code># Symptom in .nextflow.log:
+ERROR: Unable to pull container: 'docker://quay.io/biocontainers/...'
+FATAL: Unable to handle docker://...
+
+# This is usually a network issue on compute nodes.
+# Check that the compute node has internet access via the proxy:
+grep "SINGULARITY_PULLDIR\|http_proxy\|NXF_SINGULARITY" .command.env
+
+# The kaust profile caches all containers to a shared directory.
+# If a container is missing from cache, you may need to pre-pull:
+module load singularity
+singularity pull docker://quay.io/biocontainers/gtdbtk:2.4.0--pyhdfd78af_1</code></pre>
+
+          <h3 id="error-resume">Resuming After a Failure</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># 1. Fix the underlying issue (increase memory in custom config, fix path, etc.)
+# 2. Re-submit the same SLURM script — -resume is already in the run command
+sbatch run_nfcore_mag.sh
+
+# Nextflow will skip all completed tasks and only retry the failed ones.
+# Watch the log to confirm:
+grep "cached\|submitted\|FAILED" .nextflow.log | tail -30</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>Do not delete the work/ directory between runs</strong>
+            The <code>work/</code> directory is Nextflow's cache. Deleting it forces every process to re-run from scratch even with <code>-resume</code>. Only clean it up when you are certain the run is complete and correct.
+          </div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="execution-reports">Execution Reports</h2>
+          <p>Nextflow can generate three complementary reports that help you understand resource usage, bottlenecks, and the overall run timeline. Pass these flags to <code>nextflow run</code>:</p>
+
+          <table>
+            <thead><tr><th>Flag</th><th>Output</th><th>Use</th></tr></thead>
+            <tbody>
+              <tr><td><code>-with-report &lt;file.html&gt;</code></td><td>Interactive HTML execution report</td><td>Per-task CPU, memory, wall time, I/O; spot OOM and timeout patterns</td></tr>
+              <tr><td><code>-with-trace &lt;file.tsv&gt;</code></td><td>Tab-delimited trace file</td><td>Machine-readable resource usage; parse with <code>awk</code> or <code>pandas</code></td></tr>
+              <tr><td><code>-with-timeline &lt;file.html&gt;</code></td><td>Interactive Gantt chart</td><td>Visualise which processes ran in parallel and where the pipeline stalled</td></tr>
+              <tr><td><code>-with-dag &lt;file.html&gt;</code></td><td>Workflow DAG diagram</td><td>Understand process dependencies at a glance</td></tr>
+            </tbody>
+          </table>
+
+          <p>The nf-core/mag pipeline also automatically saves copies of these reports to <code>results/pipeline_info/</code> after every run, even without the explicit flags.</p>
+
+          <h3 id="report-html">Reading the HTML Execution Report</h3>
+          <p>Open <code>reports/execution_report.html</code> in a browser. The report has three tabs:</p>
+          <ul>
+            <li><strong>Summary</strong> — total wall clock time, number of tasks, CPUs and memory requested vs used.</li>
+            <li><strong>Resources</strong> — scatter plots of CPU % and memory usage per task. Tasks plotted far left of the requested line are over-provisioned; tasks touching the upper limit hit the ceiling.</li>
+            <li><strong>Tasks</strong> — a sortable table of every task with its work directory path, peak RSS, and exit status. Click a row to jump to that work directory.</li>
+          </ul>
+
+          <h3 id="trace-tsv">Parsing the Trace File</h3>
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Show the header
+head -1 reports/trace.tsv | tr '\t' '\n' | cat -n
+
+# Find the 10 most memory-hungry tasks
+awk -F'\t' 'NR>1 {print $14, $1}' reports/trace.tsv \
+  | sort -rh | head -10
+
+# Find all failed tasks and their work dirs
+awk -F'\t' '$7 != "COMPLETED" {print $7, $1, $8}' reports/trace.tsv</code></pre></div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="kaust-config">The KAUST Institutional Profile</h2>
+          <p>The <code>-profile kaust</code> flag loads the KAUST institutional configuration from the <a href="https://github.com/nf-core/configs/blob/master/conf/kaust.config" target="_blank" rel="noopener">nf-core/configs</a> repository. It sets cluster-wide defaults so you do not have to specify them yourself every time:</p>
+
+          <pre><code>// Excerpt from conf/kaust.config (nf-core/configs GitHub repo)
+params {
+    config_profile_description = 'KAUST Ibex HPC cluster profile'
+    config_profile_contact     = 'KAUST Bioinformatics Core'
+    max_memory                 = 1.TB
+    max_cpus                   = 128
+    max_time                   = 720.h
+}
+
+process {
+    executor       = 'slurm'
+    queue          = 'batch'
+    scratch        = '/ibex/scratch/$USER'
+    clusterOptions = '--mail-type=FAIL'
+}
+
+singularity {
+    enabled    = true
+    autoMounts = true
+    cacheDir   = '/ibex/reference/KSL/singularity_cache'
+}</code></pre>
+
+          <div class="callout callout-note">
+            <strong>Singularity cache on Ibex</strong>
+            The <code>kaust</code> profile points Singularity to a shared container cache at <code>/ibex/reference/KSL/singularity_cache</code>. Containers already pulled by another user are reused automatically, so the first run is slower than subsequent ones.
+          </div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="custom-config">Custom Config Files</h2>
+          <p>Anything in the institutional profile can be overridden with a project-level <code>custom.config</code> file passed via the <code>-c</code> flag. This is the correct way to increase resource allocations, change queue names, or tweak tool arguments — without modifying the pipeline code itself.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code># Run the pipeline with a custom config
+nextflow run nf-core/mag \
+    -r 5.4.2 \
+    -profile kaust \
+    -c custom.config \
+    --input samplesheet.csv \
+    --outdir results/</code></pre></div>
+
+          <p>You can also place a <code>nextflow.config</code> in the launch directory — Nextflow picks it up automatically without the <code>-c</code> flag. This is handy for project-wide settings.</p>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="process-resources">Changing Process Resources</h2>
+          <p>Use the <code>process { withName: '...' { ... } }</code> block in your <code>custom.config</code> to override CPU, memory, and walltime for individual processes. Process names follow the pattern <code>NFCORE_MAG:MAG:TOOLNAME</code>; you can match by the short name or the full qualified name.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>// custom.config — override resources for specific processes
+
+process {
+
+    // Increase memory for GTDB-Tk (needs ~200 GB for release 226)
+    withName: 'GTDBTK_CLASSIFYWF' {
+        cpus   = 32
+        memory = 250.GB
+        time   = '24.h'
+    }
+
+    // Give MEGAHIT more time for large co-assemblies
+    withName: 'MEGAHIT' {
+        cpus   = 48
+        memory = 180.GB
+        time   = '12.h'
+    }
+
+    // CheckM2 is I/O heavy; more CPUs help database lookup
+    withName: 'CHECKM2_PREDICT' {
+        cpus   = 16
+        memory = 64.GB
+        time   = '4.h'
+    }
+
+}</code></pre></div>
+
+          <div class="callout callout-note">
+            <strong>Process name matching</strong>
+            Use a regular expression inside <code>withName</code> to target multiple processes at once — for example <code>'CONCOCT_.*'</code> matches all CONCOCT sub-processes. Check the exact process names in the execution report or by running <code>nextflow run nf-core/mag -r 5.4.2 --help 2>&1 | grep -i "process"</code>.
+          </div>
+
+          <h3 id="dynamic-resources">Dynamic Resource Scaling</h3>
+          <p>Nextflow supports dynamic resource allocation using closures — expressions evaluated at run time. This lets you automatically escalate resources on retry:</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>// custom.config — dynamic resources with retry
+
+process {
+
+    // Double memory on each retry attempt; cap at 512 GB
+    withName: 'GTDBTK_CLASSIFYWF' {
+        errorStrategy = { task.exitStatus in [137, 140] ? 'retry' : 'finish' }
+        maxRetries    = 2
+        memory        = { min(128.GB * task.attempt, 512.GB) }
+        time          = { 12.h * task.attempt }
+    }
+
+}</code></pre></div>
+
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="tool-parameters">Changing Tool-Specific Parameters</h2>
+          <p>Each nf-core process exposes an <code>ext.args</code> directive that is appended verbatim to the tool command line. This is the correct mechanism for passing flags that nf-core/mag does not expose as top-level pipeline parameters.</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>// custom.config — tool-specific arguments via ext.args
+
+process {
+
+    // Tune MEGAHIT k-mer sizes and minimum contig length
+    withName: 'MEGAHIT' {
+        ext.args = '--k-min 27 --k-max 127 --k-step 10 --min-contig-len 1000'
+    }
+
+    // Lower MetaBAT2 minimum contig size (default: 2500)
+    withName: 'METABAT2_METABAT2' {
+        ext.args = '--minContig 1500 --seed 1'
+    }
+
+    // Run SemiBin2 in single-sample mode (default: multi)
+    withName: 'SEMIBIN_SEMIBIN2' {
+        ext.args = '--self-supervised'
+    }
+
+    // Pass extra Prokka flags for compliance mode
+    withName: 'PROKKA' {
+        ext.args = '--compliant --centre KAUST --mincontiglen 500'
+    }
+
+    // Increase DAS Tool score threshold (default: 0.5; range 0–1)
+    withName: 'DASTOOL_DASTOOL' {
+        ext.args = '--score_threshold 0.6 --megabin_penalty 0.02'
+    }
+
+}</code></pre></div>
+
+          <div class="callout callout-warning">
+            <strong>Check the module source before using ext.args</strong>
+            Not all tool wrappers honour <code>ext.args</code> in the same position — some place it before inputs, some after. Browse the process <code>.nf</code> file in the nf-core/mag GitHub repository (<code>modules/nf-core/&lt;toolname&gt;/main.nf</code>) to confirm where <code>$options.args</code> or <code>$args</code> appears in the command string.
+          </div>
+
+          <h3 id="ext-args2">Full custom.config Example</h3>
+          <p>A single <code>custom.config</code> can combine resource overrides, retry logic, and <code>ext.args</code> in one file:</p>
+
+          <div style="position:relative;"><button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <pre><code>// custom.config — full example for KAUST Ibex course run
+
+params {
+    // Raise global caps beyond the kaust profile defaults if needed
+    max_memory = 512.GB
+    max_cpus   = 64
+    max_time   = '168.h'
+}
+
+process {
+
+    // ── Assembly ─────────────────────────────────────────────
+    withName: 'MEGAHIT' {
+        cpus     = 48
+        memory   = 180.GB
+        time     = '12.h'
+        ext.args = '--k-min 27 --k-max 127 --k-step 10'
+    }
+
+    // ── Binning ───────────────────────────────────────────────
+    withName: 'METABAT2_METABAT2' {
+        cpus     = 16
+        memory   = 64.GB
+        ext.args = '--minContig 1500'
+    }
+
+    withName: 'SEMIBIN_SEMIBIN2' {
+        cpus   = 16
+        memory = 128.GB
+        time   = '8.h'
+    }
+
+    withName: 'CONCOCT_CUTUPFASTA|CONCOCT_CONCOCT|CONCOCT_MERGECUTUPCLUSTERING' {
+        cpus   = 8
+        memory = 32.GB
+    }
+
+    // ── Bin refinement ────────────────────────────────────────
+    withName: 'DASTOOL_DASTOOL' {
+        cpus     = 16
+        memory   = 64.GB
+        ext.args = '--score_threshold 0.6'
+    }
+
+    // ── Bin QC ────────────────────────────────────────────────
+    withName: 'CHECKM2_PREDICT' {
+        cpus   = 16
+        memory = 64.GB
+        time   = '6.h'
+    }
+
+    // ── Taxonomy ──────────────────────────────────────────────
+    withName: 'GTDBTK_CLASSIFYWF' {
+        cpus          = 32
+        memory        = 250.GB
+        time          = '24.h'
+        errorStrategy = { task.exitStatus == 137 ? 'retry' : 'finish' }
+        maxRetries    = 2
+    }
+
+    // ── Annotation ────────────────────────────────────────────
+    withName: 'PROKKA' {
+        cpus     = 8
+        memory   = 32.GB
+        ext.args = '--compliant --centre KAUST'
+    }
+
+}</code></pre></div>
+
+          
+          <!-- ─────────────────────────────────────────────────── -->
+          <h2 id="useful-commands">Quick Reference</h2>
+          <table>
+            <thead><tr><th>Task</th><th>Command</th></tr></thead>
+            <tbody>
+              <tr><td>Monitor running jobs</td><td><code>squeue -u $USER</code></td></tr>
+              <tr><td>Tail the Nextflow driver log</td><td><code>tail -f nfcore_mag_*.log</code></td></tr>
+              <tr><td>Find work dir for a failed task</td><td><code>grep "FAILED" .nextflow.log | grep -oP 'work/\S+'</code></td></tr>
+              <tr><td>Check exit code</td><td><code>cat work/xx/yyyy.../.exitcode</code></td></tr>
+              <tr><td>Read tool stderr</td><td><code>cat work/xx/yyyy.../.command.err</code></td></tr>
+              <tr><td>See exact command run</td><td><code>cat work/xx/yyyy.../.command.sh</code></td></tr>
+              <tr><td>List top memory users</td><td><code>awk -F'\t' 'NR>1{print $14,$1}' reports/trace.tsv | sort -rh | head -10</code></td></tr>
+              <tr><td>Resume after failure</td><td>Re-submit the same SLURM script (it already contains <code>-resume</code>)</td></tr>
+              <tr><td>Force clean re-run</td><td>Delete <code>work/</code> and <code>.nextflow/</code>, then re-submit <em>without</em> <code>-resume</code></td></tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex; gap:1rem; margin-top:3rem;">
+            <a href="module-08-summary.html" class="btn btn-secondary">&larr; Module 8: Run Summary</a>
+            <a href="modules.html" class="btn btn-primary">All Modules &rarr;</a>
+          </div>
+
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h4>On This Page</h4>
+            <ul>
+              <li><a href="#learning-objectives">Learning Objectives</a></li>
+              <li><a href="#workflow-internals">Workflow Internals</a></li>
+              <li><a href="#running-workflow">Running the Workflow</a></li>
+              <li><a href="#output-structure">Output Folder Structure</a></li>
+              <li><a href="#results-dir">&nbsp;&nbsp;results/ Directory</a></li>
+              <li><a href="#work-dir">&nbsp;&nbsp;work/ Directory</a></li>
+              <li><a href="#log-files">Navigating Log Files</a></li>
+              <li><a href="#nextflow-log">&nbsp;&nbsp;.nextflow.log</a></li>
+              <li><a href="#process-logs">&nbsp;&nbsp;Per-Process Logs</a></li>
+              <li><a href="#slurm-log">&nbsp;&nbsp;SLURM Driver Log</a></li>
+              <li><a href="#troubleshooting">Troubleshooting</a></li>
+              <li><a href="#error-oom">&nbsp;&nbsp;OOM (Exit 137)</a></li>
+              <li><a href="#error-timeout">&nbsp;&nbsp;Timeout (Exit 140)</a></li>
+              <li><a href="#error-database">&nbsp;&nbsp;Missing Database</a></li>
+              <li><a href="#error-container">&nbsp;&nbsp;Container Failure</a></li>
+              <li><a href="#error-resume">&nbsp;&nbsp;Resuming After Failure</a></li>
+              <li><a href="#execution-reports">Execution Reports</a></li>
+              <li><a href="#kaust-config">KAUST Institutional Profile</a></li>
+              <li><a href="#custom-config">Custom Config Files</a></li>
+              <li><a href="#process-resources">Changing Process Resources</a></li>
+              <li><a href="#tool-parameters">Tool-Specific Parameters</a></li>
+              <li><a href="#useful-commands">Quick Reference</a></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>Day 4 Sessions</h4>
+            <ul>
+              <li><a href="module-07-taxonomy.html">Module 7: Taxonomy</a></li>
+              <li><a href="module-08-summary.html">Module 8: Run Summary</a></li>
+              <li><strong>nf-core/mag Deep-Dive</strong></li>
+            </ul>
+          </div>
+          <div class="sidebar-card" style="margin-top:1rem;">
+            <h4>All Modules</h4>
+            <ul>
+              <li><a href="lab-linux-ibex.html">Linux &amp; Ibex</a></li>
+              <li><a href="lab-nextflow.html">Nextflow &amp; nf-core/mag</a></li>
+              <li><a href="module-01-qc.html">1. QC &amp; Preprocessing</a></li>
+              <li><a href="module-02-assembly.html">2. Assembly &amp; Annotation</a></li>
+              <li><a href="module-03-ancient-dna.html">3. Ancient DNA</a></li>
+              <li><a href="module-04-binning.html">4. Contig Binning</a></li>
+              <li><a href="module-05-bin-refinement.html">5. Bin Refinement</a></li>
+              <li><a href="module-06-bin-qc.html">6. Bin Quality</a></li>
+              <li><a href="module-07-taxonomy.html">7. Taxonomy &amp; Annotation</a></li>
+              <li><a href="module-08-summary.html">8. Run Summary</a></li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<iframe src="../footer.html" style="border:none;width:100%;height:260px;overflow:hidden;background:#0d1b2a;display:block;"></iframe>
+</body>
+</html>
