@@ -74,7 +74,7 @@
 #SBATCH --job-name=tax_01_gtdbtk
 #SBATCH --partition=batch
 #SBATCH --time=04:00:00
-#SBATCH --mem=128G
+#SBATCH --mem=32G
 #SBATCH --cpus-per-task=16
 #SBATCH --output=logs/tax_01_gtdbtk_%j.out
 #SBATCH --error=logs/tax_01_gtdbtk_%j.err
@@ -94,8 +94,7 @@ gtdbtk classify_wf \
     --genome_dir results/05-refinement/das_tool/mock_control_DASTool_bins/ \
     --out_dir results/07-taxonomy/gtdbtk \
     --extension fa \
-    --cpus 16 \
-    --mash_db /ibex/reference/KSL/gtdb-tk/release226/
+    --cpus 16
 EOF</code></pre></div>
           <p>Submit: <code>sbatch scripts/tax_01_gtdbtk.sh</code> &nbsp;|&nbsp; Monitor: <code>squeue -u $USER</code></p>
 
